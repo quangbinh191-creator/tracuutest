@@ -31,7 +31,6 @@
             box-shadow: 0 0 25px rgba(245, 158, 11, 0.45), inset 0 0 15px rgba(245, 158, 11, 0.2);
         }
         
-        /* HIỆU ỨNG LÓE SÁNG RỰC RỠ CHO TOP 1 */
         @keyframes brilliantGlow {
             0%, 100% {
                 box-shadow: 0 0 25px rgba(245, 158, 11, 0.6), 0 0 40px rgba(245, 158, 11, 0.3), inset 0 0 15px rgba(245, 158, 11, 0.3);
@@ -46,7 +45,6 @@
             animation: brilliantGlow 2s infinite ease-in-out;
         }
 
-        /* HIỆU ỨNG TIA SÁNG QUÉT NGANG */
         @keyframes lightShine {
             0% { left: -150%; }
             30%, 100% { left: 150%; }
@@ -63,32 +61,19 @@
                 rgba(255, 255, 255, 0) 30%,
                 rgba(255, 215, 0, 0.2) 40%,
                 rgba(255, 255, 255, 0.6) 50%,
-                rgba(255, 215, 0, 0.2) 60%,
+                rgba(255, 215, 0, 0.2) 60.,
                 transparent 70%
             );
             transform: skewX(-25deg);
             animation: lightShine 3.5s infinite ease-in-out;
         }
 
-        .glow-silver {
-            box-shadow: 0 0 15px rgba(255, 255, 255, 0.25);
-        }
-        .glow-bronze {
-            box-shadow: 0 0 15px rgba(217, 119, 6, 0.25);
-        }
-        .glow-fire {
-            box-shadow: 0 0 25px rgba(239, 68, 68, 0.5);
-        }
-        ::-webkit-scrollbar {
-            width: 6px;
-        }
-        ::-webkit-scrollbar-track {
-            background: #0f172a;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #ef4444;
-            border-radius: 3px;
-        }
+        .glow-silver { box-shadow: 0 0 15px rgba(255, 255, 255, 0.25); }
+        .glow-bronze { box-shadow: 0 0 15px rgba(217, 119, 6, 0.25); }
+        .glow-fire { box-shadow: 0 0 25px rgba(239, 68, 68, 0.5); }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #ef4444; border-radius: 3px; }
     </style>
 </head>
 <body class="text-slate-100 min-h-screen py-8 px-4 sm:px-6 lg:px-8">
@@ -102,7 +87,7 @@
                 <i class="fa-solid fa-bolt text-3xl sm:text-4xl text-red-500 animate-bounce"></i>
             </div>
             <h1 class="font-oswald text-3xl sm:text-5xl lg:text-6xl font-bold tracking-wider text-amber-400 text-glow-gold uppercase italic">
-                Bảng Xếp Hạng Cao Thủ Dự Đoán World Cup 2026 carlisle homes
+                Bảng Xếp Hạng Cao Thủ Dự Đoán World Cup 2026
             </h1>
             <p class="text-yellow-400 font-bold uppercase tracking-widest text-xs sm:text-sm mt-3 flex items-center justify-center gap-2 bg-black/40 px-4 py-1 rounded-full inline-block mx-auto">
                 <span class="inline-block w-2 h-2 rounded-full bg-red-500 animate-ping"></span>
@@ -123,10 +108,11 @@
 
         <section class="bg-slate-900/80 backdrop-blur-lg rounded-2xl border border-slate-700 shadow-2xl mb-8 overflow-hidden">
             <div class="grid grid-cols-12 gap-2 sm:gap-4 px-6 py-4 bg-slate-950/90 border-b border-slate-800 font-oswald uppercase tracking-wider text-xs sm:text-sm text-slate-300 font-bold">
-                <div class="col-span-2 text-center">Hạng</div>
-                <div class="col-span-6 sm:col-span-6">Tên Cao Thủ</div>
-                <div class="col-span-2 text-center hidden sm:block">Số Trận Đúng</div>
-                <div class="col-span-4 sm:col-span-2 text-center">Tổng Điểm Số</div>
+                <div class="col-span-2 sm:col-span-1 text-center">Hạng</div>
+                <div class="col-span-6 sm:col-span-5">Tên Cao Thủ</div>
+                <div class="col-span-4 sm:col-span-2 text-center">Đúng / Tổng trận</div>
+                <div class="col-span-2 text-center hidden sm:block">Tỉ lệ đúng</div>
+                <div class="col-span-2 text-center hidden sm:block">Tổng Điểm</div>
             </div>
             <div id="rankingList" class="divide-y divide-slate-800 max-h-[480px] overflow-y-auto">
             </div>
@@ -162,14 +148,11 @@
     let players = [];
     let currentSearchKeyword = "";
 
-    // URLs GỐC CỦA BẠN TỪ CÔNG CỤ TRA CỨU
     const URL_USER_PREDICTIONS = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQOu74BZum8hv_WCNc2lCqbSmV-YXWkwWTrQZ4LmAZgY8Tjj6d9DEA1h6P9E8_4qXWisZy9-atqMeUP/pub?gid=267813523&single=true&output=csv';
     const URL_MATCH_RESULTS = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQOu74BZum8hv_WCNc2lCqbSmV-YXWkwWTrQZ4LmAZgY8Tjj6d9DEA1h6P9E8_4qXWisZy9-atqMeUP/pub?gid=652215163&single=true&output=csv';
 
-    // Bảng màu tạo avatar ngẫu nhiên
     const avatarColors = ['b6e3f4', 'c0aede', 'd1d4f9', 'ffd5dc', 'ffdfbf', 'c2f2d0', 'f4d8b6'];
 
-    // Hàm đọc file CSV (tương tự công cụ tra cứu)
     function parseCsvPromise(url) {
         return new Promise((resolve, reject) => {
             Papa.parse(url, {
@@ -183,7 +166,6 @@
 
     async function fetchPlayersData() {
         try {
-            // Lấy dữ liệu song song 2 sheet
             const [userRows, resultRows] = await Promise.all([
                 parseCsvPromise(URL_USER_PREDICTIONS),
                 parseCsvPromise(URL_MATCH_RESULTS)
@@ -199,22 +181,33 @@
             const resultHeaders = resultRows[0];
             const officialResults = resultRows[1] || [];
             
-            const maxColumns = Math.min(79, userHeaders.length); // Giới hạn số cột
+            const maxColumns = Math.min(79, userHeaders.length);
             
+            // --- BƯỚC 1: ĐẾM TỔNG SỐ TRẬN THỰC TẾ ĐÃ CÓ KẾT QUẢ TRÊN SHEET ---
+            let totalAvailableMatches = 0;
+            for (let colIdx = 0; colIdx < maxColumns; colIdx++) {
+                const columnName = userHeaders[colIdx]?.trim() || '';
+                const matchResultIdx = resultHeaders.findIndex(h => h.trim().toLowerCase() === columnName.toLowerCase());
+                if (matchResultIdx !== -1 && officialResults[matchResultIdx]) {
+                    const val = officialResults[matchResultIdx].trim();
+                    // Loại bỏ các trường hợp chưa đá (ô trống hoặc kí tự giữ chỗ ---)
+                    if (val !== '' && val !== '---') {
+                        totalAvailableMatches++;
+                    }
+                }
+            }
+
             let calculatedPlayers = [];
 
-            // Chạy vòng lặp tính điểm cho TẤT CẢ người chơi (Bắt đầu từ hàng 2 / index 1)
             for (let i = 1; i < userRows.length; i++) {
                 const currentRow = userRows[i];
                 const nickname = currentRow[idxNickname]?.trim();
                 
-                // Bỏ qua nếu dòng trống hoặc không có biệt danh
                 if (!nickname) continue;
 
                 let totalScore = 0;
                 let correctMatches = 0;
 
-                // Duyệt qua tất cả các cột dự đoán của user hiện tại
                 for (let colIdx = 0; colIdx < maxColumns; colIdx++) {
                     const columnName = userHeaders[colIdx]?.trim() || '';
                     const userValue = currentRow[colIdx]?.trim() || '';
@@ -226,7 +219,6 @@
                         correctValue = officialResults[matchResultIdx].trim();
                     }
 
-                    // Tính điểm
                     if (correctValue !== '' && correctValue !== '---' && userValue !== '') {
                         if (userValue.toLowerCase() === correctValue.toLowerCase()) {
                             const isX2 = columnName.toLowerCase().includes('[trận x2 điểm]');
@@ -236,15 +228,22 @@
                     }
                 }
 
-                // Chọn màu nền và seed avatar dựa theo nickname để luôn cố định
+                // --- BƯỚC 2: TÍNH % TỈ LỆ CHÍNH XÁC ---
+                let winRate = 0;
+                if (totalAvailableMatches > 0) {
+                    winRate = Math.round((correctMatches / totalAvailableMatches) * 100);
+                }
+
                 const bg = avatarColors[i % avatarColors.length];
 
                 calculatedPlayers.push({
                     id: i,
                     name: nickname,
                     matches: correctMatches,
+                    totalMatches: totalAvailableMatches, // Lưu trữ tổng số trận đã có kết quả
+                    winRate: winRate,                   // Lưu trữ tỉ lệ %
                     score: totalScore,
-                    seed: nickname, // Dùng tên làm seed để avatar không đổi mỗi lần tải
+                    seed: nickname,
                     bg: bg
                 });
             }
@@ -260,13 +259,11 @@
 
     function initData() {
         fetchPlayersData();
-        // Cập nhật lại Bảng xếp hạng mỗi 5 phút (300000ms)
         setInterval(fetchPlayersData, 300000);
     }
 
     function renderLeaderboard() {
         let sortedPlayers = [...players];
-        // Sắp xếp theo thứ tự Điểm từ cao xuống thấp
         sortedPlayers.sort((a, b) => b.score - a.score);
         
         let rankedData = sortedPlayers.map((p, idx) => ({ ...p, actualRank: idx + 1 }));
@@ -286,6 +283,7 @@
         return `https://api.dicebear.com/9.x/bottts-neutral/svg?seed=${encodeURIComponent(seed)}&backgroundColor=${bg}`;
     }
 
+    // --- BƯỚC 3: CẬP NHẬT VIEW PODIUM (TOP 3) ---
     function renderPodium(top3Data) {
         const podiumContainer = document.getElementById('podiumContainer');
         podiumContainer.innerHTML = '';
@@ -342,7 +340,11 @@
                     <span class="absolute bottom-0 right-0 ${badgeStyle.split(' ')[0]} text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center border border-slate-950 shadow z-10">${player.actualRank}</span>
                 </div>
                 <h3 class="font-bold text-lg text-slate-100 truncate group-hover:text-yellow-400 transition-colors z-10 relative px-2">${player.name}</h3>
-                <p class="text-slate-300 text-xs mb-3 font-semibold z-10 relative">${player.matches} trận đúng</p>
+                
+                <p class="text-slate-300 text-xs mb-3 font-semibold z-10 relative">
+                    Đúng <span class="text-green-400">${player.matches}/${player.totalMatches}</span> trận (${player.winRate}%)
+                </p>
+
                 <div class="inline-block bg-slate-900/90 px-4 py-1.5 rounded-xl border border-slate-700 shadow-inner z-10 relative">
                     <span class="font-oswald text-xl font-bold text-yellow-400 tracking-wide">${player.score.toLocaleString()} <span class="text-xs text-slate-300 font-sans">Điểm</span></span>
                 </div>
@@ -351,6 +353,7 @@
         });
     }
 
+    // --- BƯỚC 4: CẬP NHẬT VIEW DANH SÁCH BẢNG ---
     function renderTableRows(listData, isEmpty) {
         const rankingList = document.getElementById('rankingList');
         rankingList.innerHTML = '';
@@ -364,15 +367,29 @@
             const div = document.createElement('div');
             div.className = "grid grid-cols-12 gap-2 sm:gap-4 px-6 py-4 items-center bg-slate-900/50 hover:bg-yellow-400/10 transition-all duration-200 group";
             div.innerHTML = `
-                <div class="col-span-2 text-center font-oswald font-bold text-lg text-slate-400">${player.actualRank < 10 ? '0' + player.actualRank : player.actualRank}</div>
-                <div class="col-span-6 flex items-center gap-3">
+                <div class="col-span-2 sm:col-span-1 text-center font-oswald font-bold text-lg text-slate-400">
+                    ${player.actualRank < 10 ? '0' + player.actualRank : player.actualRank}
+                </div>
+                <div class="col-span-6 sm:col-span-5 flex items-center gap-3">
                     <div class="w-10 h-10 rounded-xl border border-slate-700 overflow-hidden hidden sm:flex flex-shrink-0 bg-slate-900 shadow">
                         <img src="${getChibiAvatarUrl(player.seed, player.bg)}" alt="${player.name}" class="w-full h-full object-cover">
                     </div>
                     <span class="font-semibold truncate text-slate-100 group-hover:text-yellow-400 transition-colors">${player.name}</span>
                 </div>
-                <div class="col-span-2 text-center font-semibold text-slate-200 hidden sm:block">${player.matches}</div>
-                <div class="col-span-4 sm:col-span-2 text-right font-oswald font-bold text-base text-yellow-400 tracking-wide pr-2">${player.score.toLocaleString()} Điểm</div>
+                <div class="col-span-4 sm:col-span-2 text-center font-semibold text-slate-200">
+                    <span class="text-emerald-400">${player.matches}</span> / ${player.totalMatches}
+                </div>
+                <div class="col-span-2 text-center font-semibold text-amber-400 hidden sm:block">
+                    ${player.winRate}%
+                </div>
+                <div class="col-span-2 text-right font-oswald font-bold text-base text-yellow-400 tracking-wide pr-2 hidden sm:block">
+                    ${player.score.toLocaleString()}
+                </div>
+                
+                <div class="col-span-12 flex justify-between items-center sm:hidden pt-2 border-t border-slate-800/50 mt-1 text-xs text-slate-400">
+                    <span>Tỉ lệ: <b class="text-amber-400">${player.winRate}%</b></span>
+                    <span>Tổng điểm: <b class="text-yellow-400">${player.score} Điểm</b></span>
+                </div>
             `;
             rankingList.appendChild(div);
         });
