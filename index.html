@@ -146,7 +146,6 @@
 
 <script>
     let players = [];
-    let previousRanks = {}; // Lưu trữ thứ hạng trước đó dựa vào biệt danh làm key
     let currentSearchKeyword = "";
 
     const URL_USER_PREDICTIONS = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQOu74BZum8hv_WCNc2lCqbSmV-YXWkwWTrQZ4LmAZgY8Tjj6d9DEA1h6P9E8_4qXWisZy9-atqMeUP/pub?gid=267813523&single=true&output=csv';
@@ -180,10 +179,12 @@
             const idxNickname = userHeaders.findIndex(h => h.trim().toLowerCase() === 'biệt danh');
             
             const resultHeaders = resultRows[0];
-            const officialResults = resultRows[1] || [];
+            const officialResults = resultRows[1] || [];   // Dòng 2: Kết quả hiện tại mới cập nhật
+            const previousResults = resultRows[9] || [];   // Dòng 10 (Index 9): Kết quả chưa cập nhật (Cũ)
             
             const maxColumns = Math.min(79, userHeaders.length);
             
+            // --- ĐẾM TỔNG SỐ TRẬN THỰC TẾ HIỆN TẠI ĐÃ CÓ KẾT QUẢ ---
             let totalAvailableMatches = 0;
             for (let colIdx = 0; colIdx < maxColumns; colIdx++) {
                 const columnName = userHeaders[colIdx]?.trim() || '';
@@ -193,6 +194,16 @@
                     if (val !== '' && val !== '---') {
                         totalAvailableMatches++;
                     }
+                }
+            }
+
+            // Kiểm tra xem dòng 10 có dữ liệu cũ thực tế hay không
+            let hasPrevData = false;
+            for (let k = 0; k < previousResults.length; k++) {
+                const val = previousResults[k]?.trim();
+                if (val && val !== '' && val !== '---') {
+                    hasPrevData = true;
+                    break;
                 }
             }
 
@@ -206,23 +217,35 @@
 
                 let totalScore = 0;
                 let correctMatches = 0;
+                
+                let prevScore = 0;
+                let prevMatches = 0;
 
                 for (let colIdx = 0; colIdx < maxColumns; colIdx++) {
                     const columnName = userHeaders[colIdx]?.trim() || '';
                     const userValue = currentRow[colIdx]?.trim() || '';
+                    if (!userValue) continue;
                     
                     const matchResultIdx = resultHeaders.findIndex(h => h.trim().toLowerCase() === columnName.toLowerCase());
-                    let correctValue = '---';
-                    
-                    if (matchResultIdx !== -1 && officialResults[matchResultIdx]) {
-                        correctValue = officialResults[matchResultIdx].trim();
-                    }
+                    if (matchResultIdx === -1) continue;
 
-                    if (correctValue !== '' && correctValue !== '---' && userValue !== '') {
+                    // 1. Tính toán điểm số Hiện Tại (Dòng 2)
+                    let correctValue = officialResults[matchResultIdx]?.trim() || '---';
+                    if (correctValue !== '' && correctValue !== '---') {
                         if (userValue.toLowerCase() === correctValue.toLowerCase()) {
                             const isX2 = columnName.toLowerCase().includes('[trận x2 điểm]');
                             totalScore += isX2 ? 2 : 1;
                             correctMatches += 1;
+                        }
+                    }
+
+                    // 2. Tính toán điểm số Quá Khứ (Dòng 10)
+                    let prevCorrectValue = previousResults[matchResultIdx]?.trim() || '---';
+                    if (prevCorrectValue !== '' && prevCorrectValue !== '---') {
+                        if (userValue.toLowerCase() === prevCorrectValue.toLowerCase()) {
+                            const isX2 = columnName.toLowerCase().includes('[trận x2 điểm]');
+                            prevScore += isX2 ? 2 : 1;
+                            prevMatches += 1;
                         }
                     }
                 }
@@ -241,20 +264,26 @@
                     totalMatches: totalAvailableMatches,
                     winRate: winRate,
                     score: totalScore,
+                    prevScore: prevScore,
+                    prevMatches: prevMatches,
                     seed: nickname,
-                    bg: bg
+                    bg: bg,
+                    prevRank: null // Sẽ được tính bên dưới
                 });
             }
 
-            // --- LƯU THỨ HẠNG HIỆN TẠI LÀM LỊCH SỬ TRƯỚC KHI CẬP NHẬT MỚI ---
-            if (players.length > 0) {
-                let tempSorted = [...players].sort((a, b) => {
-                    if (b.score !== a.score) return b.score - a.score;
-                    return b.matches - a.matches;
+            // --- BƯỚC TÍNH TOÁN THỨ HẠNG CŨ DỰA TRÊN DÒNG 10 ---
+            if (hasPrevData) {
+                let prevSorted = [...calculatedPlayers].sort((a, b) => {
+                    if (b.prevScore !== a.prevScore) return b.prevScore - a.prevScore;
+                    return b.prevMatches - a.prevMatches;
                 });
-                previousRanks = {};
-                tempSorted.forEach((p, idx) => {
-                    previousRanks[p.name] = idx + 1;
+                let prevRanksMap = {};
+                prevSorted.forEach((p, idx) => {
+                    prevRanksMap[p.name] = idx + 1;
+                });
+                calculatedPlayers.forEach(p => {
+                    p.prevRank = prevRanksMap[p.name] || null;
                 });
             }
 
@@ -284,20 +313,18 @@
     function renderLeaderboard() {
         let sortedPlayers = [...players];
         
-        // --- SẮP XẾP: ƯU TIÊN ĐIỂM (SCORE), SAU ĐÓ XÉT TRẬN THẮNG (MATCHES) ---
+        // SẮP XẾP HIỆN TẠI: ƯU TIÊN ĐIỂM MỚI (SCORE), SAU ĐÓ XÉT TRẬN THẮNG MỚI (MATCHES)
         sortedPlayers.sort((a, b) => {
-            if (b.score !== a.score) {
-                return b.score - a.score;
-            }
+            if (b.score !== a.score) return b.score - a.score;
             return b.matches - a.matches;
         });
         
-        // Ánh xạ thứ hạng tuyệt đối kèm tính toán mức độ tăng/giảm hạng
+        // Tính toán thứ hạng hiện tại và mức độ tăng giảm so với dòng 10
         let rankedData = sortedPlayers.map((p, idx) => {
             const currentRank = idx + 1;
             let rankChange = 0;
-            if (previousRanks[p.name] !== undefined) {
-                rankChange = previousRanks[p.name] - currentRank; 
+            if (p.prevRank !== null) {
+                rankChange = p.prevRank - currentRank; // Rank cũ số to hơn rank mới => Tăng hạng (Dương)
             }
             return { ...p, actualRank: currentRank, rankChange: rankChange };
         });
