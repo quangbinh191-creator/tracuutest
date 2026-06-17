@@ -61,7 +61,7 @@
                 rgba(255, 255, 255, 0) 30%,
                 rgba(255, 215, 0, 0.2) 40%,
                 rgba(255, 255, 255, 0.6) 50%,
-                rgba(255, 215, 0, 0.2) 60.,
+                rgba(255, 215, 0, 0.2) 60%,
                 transparent 70%
             );
             transform: skewX(-25deg);
@@ -146,6 +146,7 @@
 
 <script>
     let players = [];
+    let previousRanks = {}; // Lưu trữ thứ hạng trước đó dựa vào biệt danh làm key
     let currentSearchKeyword = "";
 
     const URL_USER_PREDICTIONS = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQOu74BZum8hv_WCNc2lCqbSmV-YXWkwWTrQZ4LmAZgY8Tjj6d9DEA1h6P9E8_4qXWisZy9-atqMeUP/pub?gid=267813523&single=true&output=csv';
@@ -183,14 +184,12 @@
             
             const maxColumns = Math.min(79, userHeaders.length);
             
-            // --- BƯỚC 1: ĐẾM TỔNG SỐ TRẬN THỰC TẾ ĐÃ CÓ KẾT QUẢ TRÊN SHEET ---
             let totalAvailableMatches = 0;
             for (let colIdx = 0; colIdx < maxColumns; colIdx++) {
                 const columnName = userHeaders[colIdx]?.trim() || '';
                 const matchResultIdx = resultHeaders.findIndex(h => h.trim().toLowerCase() === columnName.toLowerCase());
                 if (matchResultIdx !== -1 && officialResults[matchResultIdx]) {
                     const val = officialResults[matchResultIdx].trim();
-                    // Loại bỏ các trường hợp chưa đá (ô trống hoặc kí tự giữ chỗ ---)
                     if (val !== '' && val !== '---') {
                         totalAvailableMatches++;
                     }
@@ -228,7 +227,6 @@
                     }
                 }
 
-                // --- BƯỚC 2: TÍNH % TỈ LỆ CHÍNH XÁC ---
                 let winRate = 0;
                 if (totalAvailableMatches > 0) {
                     winRate = Math.round((correctMatches / totalAvailableMatches) * 100);
@@ -240,11 +238,23 @@
                     id: i,
                     name: nickname,
                     matches: correctMatches,
-                    totalMatches: totalAvailableMatches, // Lưu trữ tổng số trận đã có kết quả
-                    winRate: winRate,                   // Lưu trữ tỉ lệ %
+                    totalMatches: totalAvailableMatches,
+                    winRate: winRate,
                     score: totalScore,
                     seed: nickname,
                     bg: bg
+                });
+            }
+
+            // --- LƯU THỨ HẠNG HIỆN TẠI LÀM LỊCH SỬ TRƯỚC KHI CẬP NHẬT MỚI ---
+            if (players.length > 0) {
+                let tempSorted = [...players].sort((a, b) => {
+                    if (b.score !== a.score) return b.score - a.score;
+                    return b.matches - a.matches;
+                });
+                previousRanks = {};
+                tempSorted.forEach((p, idx) => {
+                    previousRanks[p.name] = idx + 1;
                 });
             }
 
@@ -259,14 +269,38 @@
 
     function initData() {
         fetchPlayersData();
-        setInterval(fetchPlayersData, 300000);
+        setInterval(fetchPlayersData, 300000); // 5 phút tự động load lại dữ liệu một lần
+    }
+
+    function getRankChangeHTML(change) {
+        if (change > 0) {
+            return `<span class="text-emerald-400 text-xs font-sans font-bold inline-flex items-center gap-0.5 ml-1" title="Tăng ${change} bậc"><i class="fa-solid fa-caret-up"></i>${change}</span>`;
+        } else if (change < 0) {
+            return `<span class="text-red-400 text-xs font-sans font-bold inline-flex items-center gap-0.5 ml-1" title="Giảm ${Math.abs(change)} bậc"><i class="fa-solid fa-caret-down"></i>${Math.abs(change)}</span>`;
+        }
+        return `<span class="text-slate-500 text-xs font-sans ml-1" title="Không đổi"><i class="fa-solid fa-minus text-[10px]"></i></span>`;
     }
 
     function renderLeaderboard() {
         let sortedPlayers = [...players];
-        sortedPlayers.sort((a, b) => b.score - a.score);
         
-        let rankedData = sortedPlayers.map((p, idx) => ({ ...p, actualRank: idx + 1 }));
+        // --- SẮP XẾP: ƯU TIÊN ĐIỂM (SCORE), SAU ĐÓ XÉT TRẬN THẮNG (MATCHES) ---
+        sortedPlayers.sort((a, b) => {
+            if (b.score !== a.score) {
+                return b.score - a.score;
+            }
+            return b.matches - a.matches;
+        });
+        
+        // Ánh xạ thứ hạng tuyệt đối kèm tính toán mức độ tăng/giảm hạng
+        let rankedData = sortedPlayers.map((p, idx) => {
+            const currentRank = idx + 1;
+            let rankChange = 0;
+            if (previousRanks[p.name] !== undefined) {
+                rankChange = previousRanks[p.name] - currentRank; 
+            }
+            return { ...p, actualRank: currentRank, rankChange: rankChange };
+        });
 
         if (currentSearchKeyword !== "") {
             rankedData = rankedData.filter(p => p.name.toLowerCase().includes(currentSearchKeyword.toLowerCase()));
@@ -283,7 +317,6 @@
         return `https://api.dicebear.com/9.x/bottts-neutral/svg?seed=${encodeURIComponent(seed)}&backgroundColor=${bg}`;
     }
 
-    // --- BƯỚC 3: CẬP NHẬT VIEW PODIUM (TOP 3) ---
     function renderPodium(top3Data) {
         const podiumContainer = document.getElementById('podiumContainer');
         podiumContainer.innerHTML = '';
@@ -339,7 +372,9 @@
                     </div>
                     <span class="absolute bottom-0 right-0 ${badgeStyle.split(' ')[0]} text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center border border-slate-950 shadow z-10">${player.actualRank}</span>
                 </div>
-                <h3 class="font-bold text-lg text-slate-100 truncate group-hover:text-yellow-400 transition-colors z-10 relative px-2">${player.name}</h3>
+                <h3 class="font-bold text-lg text-slate-100 truncate group-hover:text-yellow-400 transition-colors z-10 relative px-2 flex items-center justify-center gap-1">
+                    ${player.name} ${getRankChangeHTML(player.rankChange)}
+                </h3>
                 
                 <p class="text-slate-300 text-xs mb-3 font-semibold z-10 relative">
                     Đúng <span class="text-green-400">${player.matches}/${player.totalMatches}</span> trận (${player.winRate}%)
@@ -353,7 +388,6 @@
         });
     }
 
-    // --- BƯỚC 4: CẬP NHẬT VIEW DANH SÁCH BẢNG ---
     function renderTableRows(listData, isEmpty) {
         const rankingList = document.getElementById('rankingList');
         rankingList.innerHTML = '';
@@ -367,8 +401,9 @@
             const div = document.createElement('div');
             div.className = "grid grid-cols-12 gap-2 sm:gap-4 px-6 py-4 items-center bg-slate-900/50 hover:bg-yellow-400/10 transition-all duration-200 group";
             div.innerHTML = `
-                <div class="col-span-2 sm:col-span-1 text-center font-oswald font-bold text-lg text-slate-400">
-                    ${player.actualRank < 10 ? '0' + player.actualRank : player.actualRank}
+                <div class="col-span-2 sm:col-span-1 text-center font-oswald font-bold text-lg text-slate-400 flex items-center justify-center gap-1">
+                    <span>${player.actualRank < 10 ? '0' + player.actualRank : player.actualRank}</span>
+                    ${getRankChangeHTML(player.rankChange)}
                 </div>
                 <div class="col-span-6 sm:col-span-5 flex items-center gap-3">
                     <div class="w-10 h-10 rounded-xl border border-slate-700 overflow-hidden hidden sm:flex flex-shrink-0 bg-slate-900 shadow">
