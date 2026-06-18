@@ -153,6 +153,37 @@
 
     const avatarColors = ['b6e3f4', 'c0aede', 'd1d4f9', 'ffd5dc', 'ffdfbf', 'c2f2d0', 'f4d8b6'];
 
+    // Hàm chuyển đổi chuỗi ngày tháng của Google Sheet thành mili-giây để so sánh chính xác
+    function parseFormTimestamp(str) {
+        if (!str) return Infinity; 
+        let timestamp = Date.parse(str);
+        if (!isNaN(timestamp)) return timestamp;
+
+        // Xử lý thủ công định dạng ngày tháng Việt Nam phổ biến (DD/MM/YYYY HH:mm:ss)
+        try {
+            const parts = str.trim().split(' ');
+            if (parts.length >= 1) {
+                const dateParts = parts[0].split('/');
+                if (dateParts.length === 3) {
+                    const day = parseInt(dateParts[0], 10);
+                    const month = parseInt(dateParts[1], 10) - 1;
+                    const year = parseInt(dateParts[2], 10);
+                    
+                    let hour = 0, min = 0, sec = 0;
+                    if (parts[1]) {
+                        const timeParts = parts[1].split(':');
+                        hour = parseInt(timeParts[0] || 0, 10);
+                        min = parseInt(timeParts[1] || 0, 10);
+                        sec = parseInt(timeParts[2] || 0, 10);
+                    }
+                    const d = new Date(year, month, day, hour, min, sec);
+                    if (!isNaN(d.getTime())) return d.getTime();
+                }
+            }
+        } catch(e) {}
+        return Infinity; // Nếu không định dạng được, đẩy xuống cuối cùng
+    }
+
     function parseCsvPromise(url) {
         return new Promise((resolve, reject) => {
             Papa.parse(url, {
@@ -178,6 +209,13 @@
             const userHeaders = userRows[0];
             const idxNickname = userHeaders.findIndex(h => h.trim().toLowerCase() === 'biệt danh');
             
+            // Tìm cột dấu thời gian (Timestamp) tự động dựa trên tiêu đề cột
+            let idxTimestamp = userHeaders.findIndex(h => {
+                const s = h.trim().toLowerCase();
+                return s.includes('thời gian') || s.includes('timestamp') || s.includes('dấu');
+            });
+            if (idxTimestamp === -1) idxTimestamp = 0; // Fallback về cột đầu tiên nếu không tìm thấy chữ phù hợp
+
             const resultHeaders = resultRows[0];
             const officialResults = resultRows[1] || [];   // Dòng 2: Kết quả hiện tại mới cập nhật
             const previousResults = resultRows[9] || [];   // Dòng 10 (Index 9): Kết quả chưa cập nhật (Cũ)
@@ -256,6 +294,7 @@
                 }
 
                 const bg = avatarColors[i % avatarColors.length];
+                const timestampVal = parseFormTimestamp(currentRow[idxTimestamp]);
 
                 calculatedPlayers.push({
                     id: i,
@@ -266,22 +305,37 @@
                     score: totalScore,
                     prevScore: prevScore,
                     prevMatches: prevMatches,
+                    timestamp: timestampVal, // Lưu giá trị thời gian nộp bài
                     seed: nickname,
                     bg: bg,
-                    prevRank: null // Sẽ được tính bên dưới
+                    prevRank: null
                 });
             }
 
-            // --- BƯỚC TÍNH TOÁN THỨ HẠNG CŨ DỰA TRÊN DÒNG 10 ---
+            // --- BƯỚC TÍNH TOÁN THỨ HẠNG CŨ DỰA TRÊN DÒNG 10 (ƯU TIÊN: ĐIỂM -> TRẬN -> THỜI GIAN) ---
             if (hasPrevData) {
                 let prevSorted = [...calculatedPlayers].sort((a, b) => {
                     if (b.prevScore !== a.prevScore) return b.prevScore - a.prevScore;
-                    return b.prevMatches - a.prevMatches;
+                    if (b.prevMatches !== a.prevMatches) return b.prevMatches - a.prevMatches;
+                    return a.timestamp - b.timestamp; // Ai nộp sớm hơn (giá trị mili-giây nhỏ hơn) sẽ đứng trên
                 });
+                
                 let prevRanksMap = {};
+                let currentPrevRank = 1;
+                
                 prevSorted.forEach((p, idx) => {
-                    prevRanksMap[p.name] = idx + 1;
+                    if (idx > 0) {
+                        const previousPlayer = prevSorted[idx - 1];
+                        // Chỉ đồng hạng khi trùng cả 3 tiêu chí (Điểm cũ, Trận cũ, và Thời gian nộp trùng khớp hoàn toàn)
+                        if (p.prevScore !== previousPlayer.prevScore || 
+                            p.prevMatches !== previousPlayer.prevMatches || 
+                            p.timestamp !== previousPlayer.timestamp) {
+                            currentPrevRank = idx + 1;
+                        }
+                    }
+                    prevRanksMap[p.name] = currentPrevRank;
                 });
+                
                 calculatedPlayers.forEach(p => {
                     p.prevRank = prevRanksMap[p.name] || null;
                 });
@@ -298,7 +352,7 @@
 
     function initData() {
         fetchPlayersData();
-        setInterval(fetchPlayersData, 300000); // 5 phút tự động load lại dữ liệu một lần
+        setInterval(fetchPlayersData, 300000); // 5 phút tự động tải lại dữ liệu một lần
     }
 
     function getRankChangeHTML(change) {
@@ -313,20 +367,30 @@
     function renderLeaderboard() {
         let sortedPlayers = [...players];
         
-        // SẮP XẾP HIỆN TẠI: ƯU TIÊN ĐIỂM MỚI (SCORE), SAU ĐÓ XÉT TRẬN THẮNG MỚI (MATCHES)
+        // SẮP XẾP HIỆN TẠI: ƯU TIÊN ĐIỂM MỚI -> TRẬN THẮNG MỚI -> THỜI GIAN HOÀN THÀNH SỚM NHẤT
         sortedPlayers.sort((a, b) => {
             if (b.score !== a.score) return b.score - a.score;
-            return b.matches - a.matches;
+            if (b.matches !== a.matches) return b.matches - a.matches;
+            return a.timestamp - b.timestamp; // Ai nộp trước xếp trên
         });
         
-        // Tính toán thứ hạng hiện tại và mức độ tăng giảm so với dòng 10
+        // Tính toán thứ hạng hiện tại và mức độ tăng giảm bậc
+        let currentActualRank = 1;
         let rankedData = sortedPlayers.map((p, idx) => {
-            const currentRank = idx + 1;
+            if (idx > 0) {
+                const previousPlayer = sortedPlayers[idx - 1];
+                if (p.score !== previousPlayer.score || 
+                    p.matches !== previousPlayer.matches || 
+                    p.timestamp !== previousPlayer.timestamp) {
+                    currentActualRank = idx + 1;
+                }
+            }
+            
             let rankChange = 0;
             if (p.prevRank !== null) {
-                rankChange = p.prevRank - currentRank; // Rank cũ số to hơn rank mới => Tăng hạng (Dương)
+                rankChange = p.prevRank - currentActualRank; // Hiệu số chuẩn xác bậc cũ - bậc mới
             }
-            return { ...p, actualRank: currentRank, rankChange: rankChange };
+            return { ...p, actualRank: currentActualRank, rankChange: rankChange };
         });
 
         if (currentSearchKeyword !== "") {
