@@ -177,12 +177,6 @@
         });
     }
 
-    function isMatchColumn(name) {
-        if (!name) return false;
-        const s = name.trim().toLowerCase();
-        return !s.includes('biệt danh') && !s.includes('thời gian') && !s.includes('timestamp') && !s.includes('dấu thời gian') && s !== '';
-    }
-
     async function fetchPlayersData() {
         try {
             const [r1UserRows, r1ResultRows, r2Rows] = await Promise.all([
@@ -282,56 +276,58 @@
                 const r2OfficialResults = r2Rows[2] || []; // Dòng 3: Kết quả sau cập nhật
                 const r2IdxNickname = r2Headers.findIndex(h => h.trim().toLowerCase() === 'biệt danh');
 
+                // Tổng trận đã đá chỉ tính từ cột J (Index 9) trở đi
                 let r2TotalAvailableMatches = 0;
-                for (let colIdx = 0; colIdx < r2Headers.length; colIdx++) {
-                    const columnName = r2Headers[colIdx]?.trim() || '';
-                    // Luôn tính cột H (7) và I (8) vào tổng số trận đấu hợp lệ
-                    if (colIdx !== 7 && colIdx !== 8) {
-                        if (colIdx === r2IdxNickname || !isMatchColumn(columnName)) continue;
-                    }
+                for (let colIdx = 9; colIdx < r2Headers.length; colIdx++) {
                     const val = r2OfficialResults[colIdx]?.trim();
                     if (val && val !== '' && val !== '---') r2TotalAvailableMatches++;
                 }
 
                 let r2HasPrevData = false;
-                for (let k = 0; k < r2PreviousResults.length; k++) {
-                    const val = r2PreviousResults[k]?.trim();
+                for (let colIdx = 9; colIdx < r2Headers.length; colIdx++) {
+                    const val = r2PreviousResults[colIdx]?.trim();
                     if (val && val !== '' && val !== '---') { r2HasPrevData = true; break; }
                 }
 
                 let calculatedR2 = [];
+                // Bắt đầu quét danh sách người chơi thực tế từ dòng thứ 4 (Index 3) trở đi
                 for (let i = 3; i < r2Rows.length; i++) {
                     const currentRow = r2Rows[i];
                     const nickname = currentRow[r2IdxNickname]?.trim();
                     if (!nickname) continue;
 
+                    // Lấy tên trận đấu được chọn làm Ngôi sao hy vọng ở cột H (Index 7) và cột I (Index 8)
+                    const star1MatchName = currentRow[7]?.trim().toLowerCase() || '';
+                    const star2MatchName = currentRow[8]?.trim().toLowerCase() || '';
+
                     let totalScore = 0, correctMatches = 0, prevScore = 0, prevMatches = 0;
 
-                    for (let colIdx = 0; colIdx < r2Headers.length; colIdx++) {
+                    // Duyệt từ cột J (Index 9) trở đi để tính toán
+                    for (let colIdx = 9; colIdx < r2Headers.length; colIdx++) {
                         const columnName = r2Headers[colIdx]?.trim() || '';
-                        if (colIdx !== 7 && colIdx !== 8) {
-                            if (colIdx === r2IdxNickname || !isMatchColumn(columnName)) continue;
-                        }
-
+                        const columnNameLower = columnName.toLowerCase();
                         const userValue = currentRow[colIdx]?.trim() || '';
                         if (!userValue) continue;
+
+                        // Kiểm tra xem cột trận đấu hiện tại có trùng với trận đặt Ngôi sao hy vọng không
+                        const isStar1 = star1MatchName && columnNameLower === star1MatchName;
+                        const isStar2 = star2MatchName && columnNameLower === star2MatchName;
+                        const isStar = isStar1 || isStar2;
 
                         // 1. Đối chiếu tính điểm mới nhất (Dòng 3)
                         let correctValue = r2OfficialResults[colIdx]?.trim() || '---';
                         if (correctValue !== '' && correctValue !== '---') {
-                            if (colIdx === 7 || colIdx === 8) {
-                                // QUY TẮC NGÔI SAO HY VỌNG: ĐÚNG +2 | SAI -1
-                                if (userValue.toLowerCase() === correctValue.toLowerCase()) {
-                                    totalScore += 2;
-                                    correctMatches += 1;
+                            if (userValue.toLowerCase() === correctValue.toLowerCase()) {
+                                correctMatches += 1;
+                                if (isStar) {
+                                    totalScore += 2; // Đúng Ngôi sao hy vọng: +2 điểm
                                 } else {
-                                    totalScore -= 1;
+                                    const isX2 = columnNameLower.includes('[trận x2 điểm]');
+                                    totalScore += isX2 ? 2 : 1;
                                 }
                             } else {
-                                if (userValue.toLowerCase() === correctValue.toLowerCase()) {
-                                    const isX2 = columnName.toLowerCase().includes('[trận x2 điểm]');
-                                    totalScore += isX2 ? 2 : 1;
-                                    correctMatches += 1;
+                                if (isStar) {
+                                    totalScore -= 1; // Sai Ngôi sao hy vọng: -1 điểm
                                 }
                             }
                         }
@@ -339,18 +335,17 @@
                         // 2. Đối chiếu tính điểm lịch sử cũ (Dòng 2)
                         let prevCorrectValue = r2PreviousResults[colIdx]?.trim() || '---';
                         if (prevCorrectValue !== '' && prevCorrectValue !== '---') {
-                            if (colIdx === 7 || colIdx === 8) {
-                                if (userValue.toLowerCase() === prevCorrectValue.toLowerCase()) {
+                            if (userValue.toLowerCase() === prevCorrectValue.toLowerCase()) {
+                                prevMatches += 1;
+                                if (isStar) {
                                     prevScore += 2;
-                                    prevMatches += 1;
                                 } else {
-                                    prevScore -= 1;
+                                    const isX2 = columnNameLower.includes('[trận x2 điểm]');
+                                    prevScore += isX2 ? 2 : 1;
                                 }
                             } else {
-                                if (userValue.toLowerCase() === prevCorrectValue.toLowerCase()) {
-                                    const isX2 = columnName.toLowerCase().includes('[trận x2 điểm]');
-                                    prevScore += isX2 ? 2 : 1;
-                                    prevMatches += 1;
+                                if (isStar) {
+                                    prevScore -= 1;
                                 }
                             }
                         }
