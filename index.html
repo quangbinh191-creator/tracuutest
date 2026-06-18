@@ -97,11 +97,11 @@
 
         <!-- HỆ THỐNG TAB CHUYỂN ĐỔI LUYỆN ĐUA -->
         <div class="flex justify-center gap-3 mb-8">
-            <button id="tab1Btn" onclick="switchTab(1)" class="px-5 py-2.5 rounded-xl font-oswald uppercase tracking-wider font-bold text-sm transition-all duration-300 bg-amber-500 text-slate-950 shadow-lg shadow-amber-500/20 glow-gold">
-                <i class="fa-solid fa-trophy mr-1.5"></i>Vòng Bảng
+            <button id="tab1Btn" onclick="switchTab(1)" class="px-5 py-2.5 rounded-xl font-oswald uppercase tracking-wider font-bold text-sm transition-all duration-300 bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-slate-200">
+                <i class="fa-solid fa-trophy mr-1.5"></i>Lượt 1 (12 - 18/6)
             </button>
-            <button id="tab2Btn" onclick="switchTab(2)" class="px-5 py-2.5 rounded-xl font-oswald uppercase tracking-wider font-bold text-sm transition-all duration-300 bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-slate-200">
-                <i class="fa-solid fa-fire mr-1.5"></i>Vòng Knockout
+            <button id="tab2Btn" onclick="switchTab(2)" class="px-5 py-2.5 rounded-xl font-oswald uppercase tracking-wider font-bold text-sm transition-all duration-300 bg-amber-500 text-slate-950 shadow-lg shadow-amber-500/20 glow-gold">
+                <i class="fa-solid fa-fire mr-1.5"></i>Lượt 2 (19 - 24/6)
             </button>
         </div>
 
@@ -134,10 +134,18 @@
                     <p class="font-oswald text-sm sm:text-base tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-red-500 via-amber-400 to-red-500 font-bold uppercase italic leading-relaxed">
                         ⚡ ĐƯỜNG ĐUA CÒN DÀI - VÀO KÈO NGAY ĐỂ LẬT ĐỔ NGÔI VƯƠNG! ⚡
                     </p>
-                    <div class="text-xs sm:text-sm text-slate-300 font-medium space-y-1 bg-slate-950/40 p-3 rounded-lg border border-slate-800">
-                        <p><b class="text-red-400">Lượt 1:</b> Các trận từ 12 - 18/6 | Thời gian bình chọn: từ 05/6 đến 10/6 (Chốt deadline: 15:00)</p>
-                        <p><b class="text-amber-400">Lượt 2:</b> Các trận từ 19 - 24/6 | Thời gian bình chọn: từ 17 - 18/6 (Chốt deadline: 15:00)</p>
-                        <p><b class="text-emerald-400">Lượt 3:</b> Các trận từ 25 - 28/6 | Thời gian bình chọn: từ 23 - 24/6 (Chốt deadline: 15:00)</p>
+                    
+                    <!-- LỊCH TRÌNH DỰ ĐOÁN ĐƯỢC THAY ĐỔI DÂN DỤNG THEO TAB -->
+                    <div id="scheduleContainer" class="text-xs sm:text-sm text-slate-300 font-medium space-y-1.5 bg-slate-950/40 p-3 rounded-lg border border-slate-800 text-left">
+                        <p><i class="fa-regular fa-clock text-amber-400 mr-1.5"></i><b>Trưa ngày 25 - 28/6:</b> Dự đoán các trận ngày 29/6</p>
+                        <p><i class="fa-regular fa-clock text-amber-400 mr-1.5"></i><b>Ngày 29/6 (đến 22:00):</b> Dự đoán các trận ngày 30/6 - 04/7</p>
+                        <p><i class="fa-regular fa-clock text-amber-400 mr-1.5"></i><b>Ngày 02/7 - 04/7 (Chốt 15:00):</b> Dự đoán các trận ngày 05/7 - 06/7</p>
+                        <p><i class="fa-regular fa-clock text-amber-400 mr-1.5"></i><b>Ngày 06/7:</b> Dự đoán các trận ngày 07/7 - 08/7</p>
+                        <p><i class="fa-regular fa-clock text-amber-400 mr-1.5"></i><b>Ngày 08/7 - 09/7:</b> Dự đoán các trận ngày 10/7 - 11/7</p>
+                        <p><i class="fa-regular fa-clock text-amber-400 mr-1.5"></i><b>Ngày 09/7 - 10/7:</b> Dự đoán trận ngày 12/7</p>
+                        <p><i class="fa-regular fa-clock text-amber-400 mr-1.5"></i><b>Ngày 12/7 - 14/7:</b> Dự đoán trận ngày 15/7</p>
+                        <p><i class="fa-regular fa-clock text-amber-400 mr-1.5"></i><b>Ngày 15/7:</b> Dự đoán trận ngày 16/7</p>
+                        <p><i class="fa-regular fa-clock text-amber-400 mr-1.5"></i><b>Ngày 16/7 - 18/7:</b> Dự đoán các trận ngày 19/7 - 20/7</p>
                     </div>
                     
                     <div class="pt-2 text-center">
@@ -157,7 +165,7 @@
 <script>
     let playersR1 = [];
     let playersR2 = [];
-    let currentTab = 1; 
+    let currentTab = 2; // Mặc định mở Lượt 2 khi tải trang
     let currentSearchKeyword = "";
 
     const URL_R1_USER_PREDICTIONS = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQOu74BZum8hv_WCNc2lCqbSmV-YXWkwWTrQZ4LmAZgY8Tjj6d9DEA1h6P9E8_4qXWisZy9-atqMeUP/pub?gid=267813523&single=true&output=csv';
@@ -165,6 +173,10 @@
     const URL_R2_DATA = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQOu74BZum8hv_WCNc2lCqbSmV-YXWkwWTrQZ4LmAZgY8Tjj6d9DEA1h6P9E8_4qXWisZy9-atqMeUP/pub?gid=1421278402&single=true&output=csv';
 
     const avatarColors = ['b6e3f4', 'c0aede', 'd1d4f9', 'ffd5dc', 'ffdfbf', 'c2f2d0', 'f4d8b6'];
+
+    function cleanString(str) {
+        return str ? str.trim().toLowerCase().replace(/\s+/g, ' ') : '';
+    }
 
     function parseCsvPromise(url) {
         return new Promise((resolve, reject) => {
@@ -229,7 +241,7 @@
 
                         let correctValue = r1OfficialResults[matchResultIdx]?.trim() || '---';
                         if (correctValue !== '' && correctValue !== '---') {
-                            if (userValue.toLowerCase() === correctValue.toLowerCase()) {
+                            if (cleanString(userValue) === cleanString(correctValue)) {
                                 const isX2 = columnName.toLowerCase().includes('[trận x2 điểm]');
                                 totalScore += isX2 ? 2 : 1;
                                 correctMatches += 1;
@@ -238,7 +250,7 @@
 
                         let prevCorrectValue = r1PreviousResults[matchResultIdx]?.trim() || '---';
                         if (prevCorrectValue !== '' && prevCorrectValue !== '---') {
-                            if (userValue.toLowerCase() === prevCorrectValue.toLowerCase()) {
+                            if (cleanString(userValue) === cleanString(prevCorrectValue)) {
                                 const isX2 = columnName.toLowerCase().includes('[trận x2 điểm]');
                                 prevScore += isX2 ? 2 : 1;
                                 prevMatches += 1;
@@ -272,11 +284,10 @@
             // ==========================================
             if (r2Rows.length >= 3) {
                 const r2Headers = r2Rows[0];
-                const r2PreviousResults = r2Rows[1] || []; // Dòng 2: Kết quả trước cập nhật
-                const r2OfficialResults = r2Rows[2] || []; // Dòng 3: Kết quả sau cập nhật
+                const r2PreviousResults = r2Rows[1] || []; 
+                const r2OfficialResults = r2Rows[2] || []; 
                 const r2IdxNickname = r2Headers.findIndex(h => h.trim().toLowerCase() === 'biệt danh');
 
-                // Tổng trận đã đá chỉ tính từ cột J (Index 9) trở đi
                 let r2TotalAvailableMatches = 0;
                 for (let colIdx = 9; colIdx < r2Headers.length; colIdx++) {
                     const val = r2OfficialResults[colIdx]?.trim();
@@ -290,52 +301,44 @@
                 }
 
                 let calculatedR2 = [];
-                // Bắt đầu quét danh sách người chơi thực tế từ dòng thứ 4 (Index 3) trở đi
                 for (let i = 3; i < r2Rows.length; i++) {
                     const currentRow = r2Rows[i];
                     const nickname = currentRow[r2IdxNickname]?.trim();
                     if (!nickname) continue;
 
-                    // Lấy tên trận đấu được chọn làm Ngôi sao hy vọng ở cột H (Index 7) và cột I (Index 8)
-                    const star1MatchName = currentRow[7]?.trim().toLowerCase() || '';
-                    const star2MatchName = currentRow[8]?.trim().toLowerCase() || '';
+                    const star1MatchName = cleanString(currentRow[7]);
+                    const star2MatchName = cleanString(currentRow[8]);
 
                     let totalScore = 0, correctMatches = 0, prevScore = 0, prevMatches = 0;
 
-                    // Duyệt từ cột J (Index 9) trở đi để tính toán
                     for (let colIdx = 9; colIdx < r2Headers.length; colIdx++) {
-                        const columnName = r2Headers[colIdx]?.trim() || '';
-                        const columnNameLower = columnName.toLowerCase();
+                        const columnNameLower = cleanString(r2Headers[colIdx]);
                         const userValue = currentRow[colIdx]?.trim() || '';
                         if (!userValue) continue;
 
-                        // Kiểm tra xem cột trận đấu hiện tại có trùng với trận đặt Ngôi sao hy vọng không
-                        const isStar1 = star1MatchName && columnNameLower === star1MatchName;
-                        const isStar2 = star2MatchName && columnNameLower === star2MatchName;
-                        const isStar = isStar1 || isStar2;
+                        const isStar = (star1MatchName && columnNameLower.includes(star1MatchName)) || 
+                                       (star2MatchName && columnNameLower.includes(star2MatchName));
 
-                        // 1. Đối chiếu tính điểm mới nhất (Dòng 3)
                         let correctValue = r2OfficialResults[colIdx]?.trim() || '---';
                         if (correctValue !== '' && correctValue !== '---') {
-                            if (userValue.toLowerCase() === correctValue.toLowerCase()) {
+                            if (cleanString(userValue) === cleanString(correctValue)) {
                                 correctMatches += 1;
                                 if (isStar) {
-                                    totalScore += 2; // Đúng Ngôi sao hy vọng: +2 điểm
+                                    totalScore += 2; 
                                 } else {
                                     const isX2 = columnNameLower.includes('[trận x2 điểm]');
                                     totalScore += isX2 ? 2 : 1;
                                 }
                             } else {
                                 if (isStar) {
-                                    totalScore -= 1; // Sai Ngôi sao hy vọng: -1 điểm
+                                    totalScore -= 1; 
                                 }
                             }
                         }
 
-                        // 2. Đối chiếu tính điểm lịch sử cũ (Dòng 2)
                         let prevCorrectValue = r2PreviousResults[colIdx]?.trim() || '---';
                         if (prevCorrectValue !== '' && prevCorrectValue !== '---') {
-                            if (userValue.toLowerCase() === prevCorrectValue.toLowerCase()) {
+                            if (cleanString(userValue) === cleanString(prevCorrectValue)) {
                                 prevMatches += 1;
                                 if (isStar) {
                                     prevScore += 2;
@@ -389,24 +392,38 @@
         currentTab = tabNum;
         const btn1 = document.getElementById('tab1Btn');
         const btn2 = document.getElementById('tab2Btn');
+        const scheduleContainer = document.getElementById('scheduleContainer');
         
         if (tabNum === 1) {
             btn1.className = "px-5 py-2.5 rounded-xl font-oswald uppercase tracking-wider font-bold text-sm transition-all duration-300 bg-amber-500 text-slate-950 shadow-lg shadow-amber-500/20 glow-gold";
             btn2.className = "px-5 py-2.5 rounded-xl font-oswald uppercase tracking-wider font-bold text-sm transition-all duration-300 bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-slate-200";
+            
+            // Render lịch trình cho Lượt 1
+            scheduleContainer.className = "text-xs sm:text-sm text-slate-300 font-medium space-y-1 bg-slate-950/40 p-3 rounded-lg border border-slate-800 text-left sm:text-center";
+            scheduleContainer.innerHTML = `
+                <p><b class="text-red-400">Lượt 1:</b> Các trận từ 12 - 18/6 | Thời gian bình chọn: từ 05/6 đến 10/6 (Chốt deadline: 15:00)</p>
+                <p><b class="text-amber-400">Lượt 2:</b> Các trận từ 19 - 24/6 | Thời gian bình chọn: từ 17 - 18/6 (Chốt deadline: 15:00)</p>
+                <p><b class="text-emerald-400">Lượt 3:</b> Các trận từ 25 - 28/6 | Thời gian bình chọn: từ 23 - 24/6 (Chốt deadline: 15:00)</p>
+            `;
         } else {
             btn2.className = "px-5 py-2.5 rounded-xl font-oswald uppercase tracking-wider font-bold text-sm transition-all duration-300 bg-amber-500 text-slate-950 shadow-lg shadow-amber-500/20 glow-gold";
             btn1.className = "px-5 py-2.5 rounded-xl font-oswald uppercase tracking-wider font-bold text-sm transition-all duration-300 bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-slate-200";
+            
+            // Render lịch trình chi tiết cho Lượt 2 theo mốc thời gian mới
+            scheduleContainer.className = "text-xs sm:text-sm text-slate-300 font-medium space-y-1.5 bg-slate-950/40 p-3 rounded-lg border border-slate-800 text-left";
+            scheduleContainer.innerHTML = `
+                <p><i class="fa-regular fa-clock text-amber-400 mr-1.5"></i><b>Trưa ngày 25 - 28/6:</b> Dự đoán các trận ngày 29/6</p>
+                <p><i class="fa-regular fa-clock text-amber-400 mr-1.5"></i><b>Ngày 29/6 (đến 22:00):</b> Dự đoán các trận ngày 30/6 - 04/7</p>
+                <p><i class="fa-regular fa-clock text-amber-400 mr-1.5"></i><b>Ngày 02/7 - 04/7 (Chốt 15:00):</b> Dự đoán các trận ngày 05/7 - 06/7</p>
+                <p><i class="fa-regular fa-clock text-amber-400 mr-1.5"></i><b>Ngày 06/7:</b> Dự đoán các trận ngày 07/7 - 08/7</p>
+                <p><i class="fa-regular fa-clock text-amber-400 mr-1.5"></i><b>Ngày 08/7 - 09/7:</b> Dự đoán các trận ngày 10/7 - 11/7</p>
+                <p><i class="fa-regular fa-clock text-amber-400 mr-1.5"></i><b>Ngày 09/7 - 10/7:</b> Dự đoán trận ngày 12/7</p>
+                <p><i class="fa-regular fa-clock text-amber-400 mr-1.5"></i><b>Ngày 12/7 - 14/7:</b> Dự đoán trận ngày 15/7</p>
+                <p><i class="fa-regular fa-clock text-amber-400 mr-1.5"></i><b>Ngày 15/7:</b> Dự đoán trận ngày 16/7</p>
+                <p><i class="fa-regular fa-clock text-amber-400 mr-1.5"></i><b>Ngày 16/7 - 18/7:</b> Dự đoán các trận ngày 19/7 - 20/7</p>
+            `;
         }
         renderLeaderboard();
-    }
-
-    function getRankChangeHTML(change) {
-        if (change > 0) {
-            return `<span class="text-emerald-400 text-xs font-sans font-bold inline-flex items-center gap-0.5 ml-1" title="Tăng ${change} bậc"><i class="fa-solid fa-caret-up"></i>${change}</span>`;
-        } else if (change < 0) {
-            return `<span class="text-red-400 text-xs font-sans font-bold inline-flex items-center gap-0.5 ml-1" title="Giảm ${Math.abs(change)} bậc"><i class="fa-solid fa-caret-down"></i>${Math.abs(change)}</span>`;
-        }
-        return `<span class="text-slate-500 text-xs font-sans ml-1" title="Không đổi"><i class="fa-solid fa-minus text-[10px]"></i></span>`;
     }
 
     function renderLeaderboard() {
