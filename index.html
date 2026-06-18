@@ -95,6 +95,7 @@
             </p>
         </header>
 
+        <!-- HỆ THỐNG TAB CHUYỂN ĐỔI LUYỆN ĐUA -->
         <div class="flex justify-center gap-3 mb-8">
             <button id="tab1Btn" onclick="switchTab(1)" class="px-5 py-2.5 rounded-xl font-oswald uppercase tracking-wider font-bold text-sm transition-all duration-300 bg-amber-500 text-slate-950 shadow-lg shadow-amber-500/20 glow-gold">
                 <i class="fa-solid fa-trophy mr-1.5"></i>Lượt 1 (12 - 18/6)
@@ -159,7 +160,6 @@
     let currentTab = 1; 
     let currentSearchKeyword = "";
 
-    // URLs cấu hình dữ liệu công khai Google Sheets
     const URL_R1_USER_PREDICTIONS = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQOu74BZum8hv_WCNc2lCqbSmV-YXWkwWTrQZ4LmAZgY8Tjj6d9DEA1h6P9E8_4qXWisZy9-atqMeUP/pub?gid=267813523&single=true&output=csv';
     const URL_R1_MATCH_RESULTS = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQOu74BZum8hv_WCNc2lCqbSmV-YXWkwWTrQZ4LmAZgY8Tjj6d9DEA1h6P9E8_4qXWisZy9-atqMeUP/pub?gid=652215163&single=true&output=csv';
     const URL_R2_DATA = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQOu74BZum8hv_WCNc2lCqbSmV-YXWkwWTrQZ4LmAZgY8Tjj6d9DEA1h6P9E8_4qXWisZy9-atqMeUP/pub?gid=1421278402&single=true&output=csv';
@@ -278,14 +278,17 @@
             // ==========================================
             if (r2Rows.length >= 3) {
                 const r2Headers = r2Rows[0];
-                const r2PreviousResults = r2Rows[1] || []; // Dòng 2 (Index 1): Kết quả trước cập nhật
-                const r2OfficialResults = r2Rows[2] || []; // Dòng 3 (Index 2): Kết quả sau cập nhật
+                const r2PreviousResults = r2Rows[1] || []; // Dòng 2: Kết quả trước cập nhật
+                const r2OfficialResults = r2Rows[2] || []; // Dòng 3: Kết quả sau cập nhật
                 const r2IdxNickname = r2Headers.findIndex(h => h.trim().toLowerCase() === 'biệt danh');
 
                 let r2TotalAvailableMatches = 0;
                 for (let colIdx = 0; colIdx < r2Headers.length; colIdx++) {
                     const columnName = r2Headers[colIdx]?.trim() || '';
-                    if (colIdx === r2IdxNickname || !isMatchColumn(columnName)) continue;
+                    // Luôn tính cột H (7) và I (8) vào tổng số trận đấu hợp lệ
+                    if (colIdx !== 7 && colIdx !== 8) {
+                        if (colIdx === r2IdxNickname || !isMatchColumn(columnName)) continue;
+                    }
                     const val = r2OfficialResults[colIdx]?.trim();
                     if (val && val !== '' && val !== '---') r2TotalAvailableMatches++;
                 }
@@ -297,7 +300,6 @@
                 }
 
                 let calculatedR2 = [];
-                // Bắt đầu quét danh sách người chơi thực tế từ dòng thứ 4 (Index 3) trở đi
                 for (let i = 3; i < r2Rows.length; i++) {
                     const currentRow = r2Rows[i];
                     const nickname = currentRow[r2IdxNickname]?.trim();
@@ -307,7 +309,9 @@
 
                     for (let colIdx = 0; colIdx < r2Headers.length; colIdx++) {
                         const columnName = r2Headers[colIdx]?.trim() || '';
-                        if (colIdx === r2IdxNickname || !isMatchColumn(columnName)) continue;
+                        if (colIdx !== 7 && colIdx !== 8) {
+                            if (colIdx === r2IdxNickname || !isMatchColumn(columnName)) continue;
+                        }
 
                         const userValue = currentRow[colIdx]?.trim() || '';
                         if (!userValue) continue;
@@ -315,20 +319,39 @@
                         // 1. Đối chiếu tính điểm mới nhất (Dòng 3)
                         let correctValue = r2OfficialResults[colIdx]?.trim() || '---';
                         if (correctValue !== '' && correctValue !== '---') {
-                            if (userValue.toLowerCase() === correctValue.toLowerCase()) {
-                                const isX2 = columnName.toLowerCase().includes('[trận x2 điểm]');
-                                totalScore += isX2 ? 2 : 1;
-                                correctMatches += 1;
+                            if (colIdx === 7 || colIdx === 8) {
+                                // QUY TẮC NGÔI SAO HY VỌNG: ĐÚNG +2 | SAI -1
+                                if (userValue.toLowerCase() === correctValue.toLowerCase()) {
+                                    totalScore += 2;
+                                    correctMatches += 1;
+                                } else {
+                                    totalScore -= 1;
+                                }
+                            } else {
+                                if (userValue.toLowerCase() === correctValue.toLowerCase()) {
+                                    const isX2 = columnName.toLowerCase().includes('[trận x2 điểm]');
+                                    totalScore += isX2 ? 2 : 1;
+                                    correctMatches += 1;
+                                }
                             }
                         }
 
                         // 2. Đối chiếu tính điểm lịch sử cũ (Dòng 2)
                         let prevCorrectValue = r2PreviousResults[colIdx]?.trim() || '---';
                         if (prevCorrectValue !== '' && prevCorrectValue !== '---') {
-                            if (userValue.toLowerCase() === prevCorrectValue.toLowerCase()) {
-                                const isX2 = columnName.toLowerCase().includes('[trận x2 điểm]');
-                                prevScore += isX2 ? 2 : 1;
-                                prevMatches += 1;
+                            if (colIdx === 7 || colIdx === 8) {
+                                if (userValue.toLowerCase() === prevCorrectValue.toLowerCase()) {
+                                    prevScore += 2;
+                                    prevMatches += 1;
+                                } else {
+                                    prevScore -= 1;
+                                }
+                            } else {
+                                if (userValue.toLowerCase() === prevCorrectValue.toLowerCase()) {
+                                    const isX2 = columnName.toLowerCase().includes('[trận x2 điểm]');
+                                    prevScore += isX2 ? 2 : 1;
+                                    prevMatches += 1;
+                                }
                             }
                         }
                     }
@@ -341,7 +364,6 @@
                     });
                 }
 
-                // Tính toán bảng hạng cũ cho Lượt 2 để kích hoạt mũi tên lên/xuống chuẩn xác
                 if (r2HasPrevData) {
                     let prevSorted = [...calculatedR2].sort((a, b) => {
                         if (b.prevScore !== a.prevScore) return b.prevScore - a.prevScore;
@@ -365,7 +387,7 @@
 
     function initData() {
         fetchPlayersData();
-        setInterval(fetchPlayersData, 300000); // Tự động đồng bộ sau mỗi 5 phút
+        setInterval(fetchPlayersData, 300000); 
     }
 
     function switchTab(tabNum) {
@@ -396,7 +418,6 @@
         let activePlayers = currentTab === 1 ? playersR1 : playersR2;
         let sortedPlayers = [...activePlayers];
         
-        // SẮP XẾP CHUẨN: ƯU TIÊN ĐIỂM -> TRẬN THẮNG -> THỨ TỰ NỘP TRƯỚC (DÒNG TRÊN TRONG SHEET)
         sortedPlayers.sort((a, b) => {
             if (b.score !== a.score) return b.score - a.score;
             if (b.matches !== a.matches) return b.matches - a.matches;
