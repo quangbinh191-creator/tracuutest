@@ -80,7 +80,7 @@
 
     <div class="max-w-5xl mx-auto">
         
-        <header class="text-center mb-10 relative">
+        <header class="text-center mb-6 relative">
             <div class="inline-flex items-center justify-center gap-4 mb-3 group relative">
                 <i class="fa-solid fa-bolt text-3xl sm:text-4xl text-orange-500 animate-bounce"></i>
                 <i class="fa-solid fa-soccer-ball text-4xl sm:text-5xl text-amber-400 text-glow-gold animate-spin" style="animation-duration: 8s;"></i>
@@ -94,6 +94,15 @@
                 thần rùa tương trợ - Vòng Bảng
             </p>
         </header>
+
+        <div class="flex justify-center gap-3 mb-8">
+            <button id="tab1Btn" onclick="switchTab(1)" class="px-5 py-2.5 rounded-xl font-oswald uppercase tracking-wider font-bold text-sm transition-all duration-300 bg-amber-500 text-slate-950 shadow-lg shadow-amber-500/20 glow-gold">
+                <i class="fa-solid fa-trophy mr-1.5"></i>Lượt 1 (12 - 18/6)
+            </button>
+            <button id="tab2Btn" onclick="switchTab(2)" class="px-5 py-2.5 rounded-xl font-oswald uppercase tracking-wider font-bold text-sm transition-all duration-300 bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-slate-200">
+                <i class="fa-solid fa-fire mr-1.5"></i>Lượt 2 (19 - 24/6)
+            </button>
+        </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-12 gap-4 items-center mb-8 bg-slate-900/80 backdrop-blur-md p-4 rounded-xl border border-slate-700 shadow-xl">
             <div class="sm:col-span-12 relative">
@@ -145,11 +154,15 @@
     </div>
 
 <script>
-    let players = [];
+    let playersR1 = [];
+    let playersR2 = [];
+    let currentTab = 1; 
     let currentSearchKeyword = "";
 
-    const URL_USER_PREDICTIONS = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQOu74BZum8hv_WCNc2lCqbSmV-YXWkwWTrQZ4LmAZgY8Tjj6d9DEA1h6P9E8_4qXWisZy9-atqMeUP/pub?gid=267813523&single=true&output=csv';
-    const URL_MATCH_RESULTS = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQOu74BZum8hv_WCNc2lCqbSmV-YXWkwWTrQZ4LmAZgY8Tjj6d9DEA1h6P9E8_4qXWisZy9-atqMeUP/pub?gid=652215163&single=true&output=csv';
+    // URLs cấu hình dữ liệu công khai Google Sheets
+    const URL_R1_USER_PREDICTIONS = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQOu74BZum8hv_WCNc2lCqbSmV-YXWkwWTrQZ4LmAZgY8Tjj6d9DEA1h6P9E8_4qXWisZy9-atqMeUP/pub?gid=267813523&single=true&output=csv';
+    const URL_R1_MATCH_RESULTS = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQOu74BZum8hv_WCNc2lCqbSmV-YXWkwWTrQZ4LmAZgY8Tjj6d9DEA1h6P9E8_4qXWisZy9-atqMeUP/pub?gid=652215163&single=true&output=csv';
+    const URL_R2_DATA = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQOu74BZum8hv_WCNc2lCqbSmV-YXWkwWTrQZ4LmAZgY8Tjj6d9DEA1h6P9E8_4qXWisZy9-atqMeUP/pub?gid=1421278402&single=true&output=csv';
 
     const avatarColors = ['b6e3f4', 'c0aede', 'd1d4f9', 'ffd5dc', 'ffdfbf', 'c2f2d0', 'f4d8b6'];
 
@@ -164,133 +177,184 @@
         });
     }
 
+    function isMatchColumn(name) {
+        if (!name) return false;
+        const s = name.trim().toLowerCase();
+        return !s.includes('biệt danh') && !s.includes('thời gian') && !s.includes('timestamp') && !s.includes('dấu thời gian') && s !== '';
+    }
+
     async function fetchPlayersData() {
         try {
-            const [userRows, resultRows] = await Promise.all([
-                parseCsvPromise(URL_USER_PREDICTIONS),
-                parseCsvPromise(URL_MATCH_RESULTS)
+            const [r1UserRows, r1ResultRows, r2Rows] = await Promise.all([
+                parseCsvPromise(URL_R1_USER_PREDICTIONS),
+                parseCsvPromise(URL_R1_MATCH_RESULTS),
+                parseCsvPromise(URL_R2_DATA)
             ]);
 
-            if (userRows.length < 2 || resultRows.length < 2) {
-                throw new Error("Không tìm thấy dữ liệu hợp lệ trên hệ thống Sheet.");
-            }
-
-            const userHeaders = userRows[0];
-            const idxNickname = userHeaders.findIndex(h => h.trim().toLowerCase() === 'biệt danh');
-            
-            const resultHeaders = resultRows[0];
-            const officialResults = resultRows[1] || [];   // Dòng 2: Kết quả hiện tại mới cập nhật
-            const previousResults = resultRows[9] || [];   // Dòng 10 (Index 9): Kết quả chưa cập nhật (Cũ)
-            
-            const maxColumns = Math.min(79, userHeaders.length);
-            
-            // --- ĐẾM TỔNG SỐ TRẬN THỰC TẾ HIỆN TẠI ĐÃ CÓ KẾT QUẢ ---
-            let totalAvailableMatches = 0;
-            for (let colIdx = 0; colIdx < maxColumns; colIdx++) {
-                const columnName = userHeaders[colIdx]?.trim() || '';
-                const matchResultIdx = resultHeaders.findIndex(h => h.trim().toLowerCase() === columnName.toLowerCase());
-                if (matchResultIdx !== -1 && officialResults[matchResultIdx]) {
-                    const val = officialResults[matchResultIdx].trim();
-                    if (val !== '' && val !== '---') {
-                        totalAvailableMatches++;
+            // ==========================================
+            // I. XỬ LÝ DỮ LIỆU LƯỢT 1
+            // ==========================================
+            if (r1UserRows.length >= 2 && r1ResultRows.length >= 2) {
+                const r1UserHeaders = r1UserRows[0];
+                const r1IdxNickname = r1UserHeaders.findIndex(h => h.trim().toLowerCase() === 'biệt danh');
+                const r1ResultHeaders = r1ResultRows[0];
+                const r1OfficialResults = r1ResultRows[1] || [];
+                const r1PreviousResults = r1ResultRows[9] || [];
+                
+                let r1TotalAvailableMatches = 0;
+                for (let colIdx = 0; colIdx < Math.min(79, r1UserHeaders.length); colIdx++) {
+                    const columnName = r1UserHeaders[colIdx]?.trim() || '';
+                    const matchResultIdx = r1ResultHeaders.findIndex(h => h.trim().toLowerCase() === columnName.toLowerCase());
+                    if (matchResultIdx !== -1 && r1OfficialResults[matchResultIdx]) {
+                        const val = r1OfficialResults[matchResultIdx].trim();
+                        if (val !== '' && val !== '---') r1TotalAvailableMatches++;
                     }
                 }
-            }
 
-            // Kiểm tra xem dòng 10 có dữ liệu cũ thực tế hay không
-            let hasPrevData = false;
-            for (let k = 0; k < previousResults.length; k++) {
-                const val = previousResults[k]?.trim();
-                if (val && val !== '' && val !== '---') {
-                    hasPrevData = true;
-                    break;
+                let r1HasPrevData = false;
+                for (let k = 0; k < r1PreviousResults.length; k++) {
+                    const val = r1PreviousResults[k]?.trim();
+                    if (val && val !== '' && val !== '---') { r1HasPrevData = true; break; }
                 }
-            }
 
-            let calculatedPlayers = [];
+                let calculatedR1 = [];
+                for (let i = 1; i < r1UserRows.length; i++) {
+                    const currentRow = r1UserRows[i];
+                    const nickname = currentRow[r1IdxNickname]?.trim();
+                    if (!nickname) continue;
 
-            for (let i = 1; i < userRows.length; i++) {
-                const currentRow = userRows[i];
-                const nickname = currentRow[idxNickname]?.trim();
-                
-                if (!nickname) continue;
+                    let totalScore = 0, correctMatches = 0, prevScore = 0, prevMatches = 0;
 
-                let totalScore = 0;
-                let correctMatches = 0;
-                
-                let prevScore = 0;
-                let prevMatches = 0;
+                    for (let colIdx = 0; colIdx < Math.min(79, r1UserHeaders.length); colIdx++) {
+                        const columnName = r1UserHeaders[colIdx]?.trim() || '';
+                        const userValue = currentRow[colIdx]?.trim() || '';
+                        if (!userValue) continue;
+                        
+                        const matchResultIdx = r1ResultHeaders.findIndex(h => h.trim().toLowerCase() === columnName.toLowerCase());
+                        if (matchResultIdx === -1) continue;
 
-                for (let colIdx = 0; colIdx < maxColumns; colIdx++) {
-                    const columnName = userHeaders[colIdx]?.trim() || '';
-                    const userValue = currentRow[colIdx]?.trim() || '';
-                    if (!userValue) continue;
-                    
-                    const matchResultIdx = resultHeaders.findIndex(h => h.trim().toLowerCase() === columnName.toLowerCase());
-                    if (matchResultIdx === -1) continue;
+                        let correctValue = r1OfficialResults[matchResultIdx]?.trim() || '---';
+                        if (correctValue !== '' && correctValue !== '---') {
+                            if (userValue.toLowerCase() === correctValue.toLowerCase()) {
+                                const isX2 = columnName.toLowerCase().includes('[trận x2 điểm]');
+                                totalScore += isX2 ? 2 : 1;
+                                correctMatches += 1;
+                            }
+                        }
 
-                    // 1. Tính toán điểm số Hiện Tại (Dòng 2)
-                    let correctValue = officialResults[matchResultIdx]?.trim() || '---';
-                    if (correctValue !== '' && correctValue !== '---') {
-                        if (userValue.toLowerCase() === correctValue.toLowerCase()) {
-                            const isX2 = columnName.toLowerCase().includes('[trận x2 điểm]');
-                            totalScore += isX2 ? 2 : 1;
-                            correctMatches += 1;
+                        let prevCorrectValue = r1PreviousResults[matchResultIdx]?.trim() || '---';
+                        if (prevCorrectValue !== '' && prevCorrectValue !== '---') {
+                            if (userValue.toLowerCase() === prevCorrectValue.toLowerCase()) {
+                                const isX2 = columnName.toLowerCase().includes('[trận x2 điểm]');
+                                prevScore += isX2 ? 2 : 1;
+                                prevMatches += 1;
+                            }
                         }
                     }
 
-                    // 2. Tính toán điểm số Quá Khứ (Dòng 10)
-                    let prevCorrectValue = previousResults[matchResultIdx]?.trim() || '---';
-                    if (prevCorrectValue !== '' && prevCorrectValue !== '---') {
-                        if (userValue.toLowerCase() === prevCorrectValue.toLowerCase()) {
-                            const isX2 = columnName.toLowerCase().includes('[trận x2 điểm]');
-                            prevScore += isX2 ? 2 : 1;
-                            prevMatches += 1;
+                    let winRate = r1TotalAvailableMatches > 0 ? Math.round((correctMatches / r1TotalAvailableMatches) * 100) : 0;
+                    calculatedR1.push({
+                        id: i, name: nickname, matches: correctMatches, totalMatches: r1TotalAvailableMatches,
+                        winRate: winRate, score: totalScore, prevScore: prevScore, prevMatches: prevMatches,
+                        seed: nickname, bg: avatarColors[i % avatarColors.length], prevRank: null
+                    });
+                }
+
+                if (r1HasPrevData) {
+                    let prevSorted = [...calculatedR1].sort((a, b) => {
+                        if (b.prevScore !== a.prevScore) return b.prevScore - a.prevScore;
+                        if (b.prevMatches !== a.prevMatches) return b.prevMatches - a.prevMatches;
+                        return a.id - b.id;
+                    });
+                    let prevRanksMap = {};
+                    prevSorted.forEach((p, idx) => { prevRanksMap[p.name] = idx + 1; });
+                    calculatedR1.forEach(p => { p.prevRank = prevRanksMap[p.name] || null; });
+                }
+                playersR1 = calculatedR1;
+            }
+
+            // ==========================================
+            // II. XỬ LÝ DỮ LIỆU LƯỢT 2
+            // ==========================================
+            if (r2Rows.length >= 3) {
+                const r2Headers = r2Rows[0];
+                const r2PreviousResults = r2Rows[1] || []; // Dòng 2 (Index 1): Kết quả trước cập nhật
+                const r2OfficialResults = r2Rows[2] || []; // Dòng 3 (Index 2): Kết quả sau cập nhật
+                const r2IdxNickname = r2Headers.findIndex(h => h.trim().toLowerCase() === 'biệt danh');
+
+                let r2TotalAvailableMatches = 0;
+                for (let colIdx = 0; colIdx < r2Headers.length; colIdx++) {
+                    const columnName = r2Headers[colIdx]?.trim() || '';
+                    if (colIdx === r2IdxNickname || !isMatchColumn(columnName)) continue;
+                    const val = r2OfficialResults[colIdx]?.trim();
+                    if (val && val !== '' && val !== '---') r2TotalAvailableMatches++;
+                }
+
+                let r2HasPrevData = false;
+                for (let k = 0; k < r2PreviousResults.length; k++) {
+                    const val = r2PreviousResults[k]?.trim();
+                    if (val && val !== '' && val !== '---') { r2HasPrevData = true; break; }
+                }
+
+                let calculatedR2 = [];
+                // Bắt đầu quét danh sách người chơi thực tế từ dòng thứ 4 (Index 3) trở đi
+                for (let i = 3; i < r2Rows.length; i++) {
+                    const currentRow = r2Rows[i];
+                    const nickname = currentRow[r2IdxNickname]?.trim();
+                    if (!nickname) continue;
+
+                    let totalScore = 0, correctMatches = 0, prevScore = 0, prevMatches = 0;
+
+                    for (let colIdx = 0; colIdx < r2Headers.length; colIdx++) {
+                        const columnName = r2Headers[colIdx]?.trim() || '';
+                        if (colIdx === r2IdxNickname || !isMatchColumn(columnName)) continue;
+
+                        const userValue = currentRow[colIdx]?.trim() || '';
+                        if (!userValue) continue;
+
+                        // 1. Đối chiếu tính điểm mới nhất (Dòng 3)
+                        let correctValue = r2OfficialResults[colIdx]?.trim() || '---';
+                        if (correctValue !== '' && correctValue !== '---') {
+                            if (userValue.toLowerCase() === correctValue.toLowerCase()) {
+                                const isX2 = columnName.toLowerCase().includes('[trận x2 điểm]');
+                                totalScore += isX2 ? 2 : 1;
+                                correctMatches += 1;
+                            }
+                        }
+
+                        // 2. Đối chiếu tính điểm lịch sử cũ (Dòng 2)
+                        let prevCorrectValue = r2PreviousResults[colIdx]?.trim() || '---';
+                        if (prevCorrectValue !== '' && prevCorrectValue !== '---') {
+                            if (userValue.toLowerCase() === prevCorrectValue.toLowerCase()) {
+                                const isX2 = columnName.toLowerCase().includes('[trận x2 điểm]');
+                                prevScore += isX2 ? 2 : 1;
+                                prevMatches += 1;
+                            }
                         }
                     }
+
+                    let winRate = r2TotalAvailableMatches > 0 ? Math.round((correctMatches / r2TotalAvailableMatches) * 100) : 0;
+                    calculatedR2.push({
+                        id: i, name: nickname, matches: correctMatches, totalMatches: r2TotalAvailableMatches,
+                        winRate: winRate, score: totalScore, prevScore: prevScore, prevMatches: prevMatches,
+                        seed: nickname, bg: avatarColors[i % avatarColors.length], prevRank: null
+                    });
                 }
 
-                let winRate = 0;
-                if (totalAvailableMatches > 0) {
-                    winRate = Math.round((correctMatches / totalAvailableMatches) * 100);
+                // Tính toán bảng hạng cũ cho Lượt 2 để kích hoạt mũi tên lên/xuống chuẩn xác
+                if (r2HasPrevData) {
+                    let prevSorted = [...calculatedR2].sort((a, b) => {
+                        if (b.prevScore !== a.prevScore) return b.prevScore - a.prevScore;
+                        if (b.prevMatches !== a.prevMatches) return b.prevMatches - a.prevMatches;
+                        return a.id - b.id;
+                    });
+                    let prevRanksMap = {};
+                    prevSorted.forEach((p, idx) => { prevRanksMap[p.name] = idx + 1; });
+                    calculatedR2.forEach(p => { p.prevRank = prevRanksMap[p.name] || null; });
                 }
-
-                const bg = avatarColors[i % avatarColors.length];
-
-                calculatedPlayers.push({
-                    id: i, // ID chính là số thứ tự dòng trong Sheet (i nhỏ hơn nghĩa là nộp sớm hơn)
-                    name: nickname,
-                    matches: correctMatches,
-                    totalMatches: totalAvailableMatches,
-                    winRate: winRate,
-                    score: totalScore,
-                    prevScore: prevScore,
-                    prevMatches: prevMatches,
-                    seed: nickname,
-                    bg: bg,
-                    prevRank: null
-                });
+                playersR2 = calculatedR2;
             }
 
-            // --- TÍNH TOÁN THỨ HẠNG CŨ DỰA TRÊN DÒNG 10 (ƯU TIÊN: ĐIỂM -> TRẬN -> ID DÒNG TĂNG DẦN) ---
-            if (hasPrevData) {
-                let prevSorted = [...calculatedPlayers].sort((a, b) => {
-                    if (b.prevScore !== a.prevScore) return b.prevScore - a.prevScore;
-                    if (b.prevMatches !== a.prevMatches) return b.prevMatches - a.prevMatches;
-                    return a.id - b.id; // Hàng nhỏ hơn (nộp sớm hơn) đứng trước
-                });
-                
-                let prevRanksMap = {};
-                prevSorted.forEach((p, idx) => {
-                    prevRanksMap[p.name] = idx + 1; // Vì ID dòng là duy nhất nên phân cấp hạng tuần tự tuyệt đối
-                });
-                
-                calculatedPlayers.forEach(p => {
-                    p.prevRank = prevRanksMap[p.name] || null;
-                });
-            }
-
-            players = calculatedPlayers;
             renderLeaderboard();
 
         } catch (error) {
@@ -301,7 +365,22 @@
 
     function initData() {
         fetchPlayersData();
-        setInterval(fetchPlayersData, 300000); // 5 phút tự động tải lại dữ liệu một lần
+        setInterval(fetchPlayersData, 300000); // Tự động đồng bộ sau mỗi 5 phút
+    }
+
+    function switchTab(tabNum) {
+        currentTab = tabNum;
+        const btn1 = document.getElementById('tab1Btn');
+        const btn2 = document.getElementById('tab2Btn');
+        
+        if (tabNum === 1) {
+            btn1.className = "px-5 py-2.5 rounded-xl font-oswald uppercase tracking-wider font-bold text-sm transition-all duration-300 bg-amber-500 text-slate-950 shadow-lg shadow-amber-500/20 glow-gold";
+            btn2.className = "px-5 py-2.5 rounded-xl font-oswald uppercase tracking-wider font-bold text-sm transition-all duration-300 bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-slate-200";
+        } else {
+            btn2.className = "px-5 py-2.5 rounded-xl font-oswald uppercase tracking-wider font-bold text-sm transition-all duration-300 bg-amber-500 text-slate-950 shadow-lg shadow-amber-500/20 glow-gold";
+            btn1.className = "px-5 py-2.5 rounded-xl font-oswald uppercase tracking-wider font-bold text-sm transition-all duration-300 bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-slate-200";
+        }
+        renderLeaderboard();
     }
 
     function getRankChangeHTML(change) {
@@ -314,16 +393,16 @@
     }
 
     function renderLeaderboard() {
-        let sortedPlayers = [...players];
+        let activePlayers = currentTab === 1 ? playersR1 : playersR2;
+        let sortedPlayers = [...activePlayers];
         
-        // SẮP XẾP HIỆN TẠI: ƯU TIÊN ĐIỂM MỚI -> TRẬN THẮNG MỚI -> ID DÒNG NHỎ NHẤT (NỘP TRƯỚC)
+        // SẮP XẾP CHUẨN: ƯU TIÊN ĐIỂM -> TRẬN THẮNG -> THỨ TỰ NỘP TRƯỚC (DÒNG TRÊN TRONG SHEET)
         sortedPlayers.sort((a, b) => {
             if (b.score !== a.score) return b.score - a.score;
             if (b.matches !== a.matches) return b.matches - a.matches;
-            return a.id - b.id; // Ai nộp trước (dòng nằm trên trong Sheet) xếp hạng cao hơn
+            return a.id - b.id;
         });
         
-        // Tính toán thứ hạng hiện tại và mức độ tăng giảm bậc chính xác
         let rankedData = sortedPlayers.map((p, idx) => {
             const currentRank = idx + 1;
             let rankChange = 0;
@@ -370,10 +449,7 @@
         }
 
         displayOrder.forEach(player => {
-            let cardStyle = "";
-            let badgeStyle = "";
-            let rankLabel = "";
-            let shimmerLayer = "";
+            let cardStyle = "", badgeStyle = "", rankLabel = "", shimmerLayer = "";
             
             if(player.actualRank === 1) {
                 cardStyle = "bg-gradient-to-b from-amber-950/80 to-slate-950/95 border-amber-400 glow-gold-brilliant scale-105 md:scale-110 z-10 p-8";
@@ -406,11 +482,9 @@
                 <h3 class="font-bold text-lg text-slate-100 truncate group-hover:text-yellow-400 transition-colors z-10 relative px-2 flex items-center justify-center gap-1">
                     ${player.name} ${getRankChangeHTML(player.rankChange)}
                 </h3>
-                
                 <p class="text-slate-300 text-xs mb-3 font-semibold z-10 relative">
                     Đúng <span class="text-green-400">${player.matches}/${player.totalMatches}</span> trận (${player.winRate}%)
                 </p>
-
                 <div class="inline-block bg-slate-900/90 px-4 py-1.5 rounded-xl border border-slate-700 shadow-inner z-10 relative">
                     <span class="font-oswald text-xl font-bold text-yellow-400 tracking-wide">${player.score.toLocaleString()} <span class="text-xs text-slate-300 font-sans">Điểm</span></span>
                 </div>
@@ -451,7 +525,6 @@
                 <div class="col-span-2 text-right font-oswald font-bold text-base text-yellow-400 tracking-wide pr-2 hidden sm:block">
                     ${player.score.toLocaleString()}
                 </div>
-                
                 <div class="col-span-12 flex justify-between items-center sm:hidden pt-2 border-t border-slate-800/50 mt-1 text-xs text-slate-400">
                     <span>Tỉ lệ: <b class="text-amber-400">${player.winRate}%</b></span>
                     <span>Tổng điểm: <b class="text-yellow-400">${player.score} Điểm</b></span>
