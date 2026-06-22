@@ -3,329 +3,724 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TRA CỨU DỰ ĐOÁN WORLD CUP 2026 🏆</title>
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <title>Bảng Xếp Hạng Cao Thủ Dự Đoán World Cup 2026</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght=500;700&family=Plus+Jakarta+Sans:wght=400;600;700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&display=swap');
         body {
-            font-family: 'Montserrat', sans-serif;
-            background: linear-gradient(135deg, rgba(6, 78, 59, 0.8) 0%, rgba(15, 23, 42, 0.85) 100%), 
-                        url('https://phongvu.vn/cong-nghe/wp-content/uploads/2022/12/hinh-nen-bong-da-1.png');
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-image: linear-gradient(to bottom, rgba(15, 23, 42, 0.65), rgba(7, 11, 25, 0.85)), 
+                              url('https://cdn-media.sforum.vn/storage/app/media/nhuy/hinh-nen-world-cup-2026-1.jpg');
             background-size: cover;
             background-position: center;
-            background-repeat: no-repeat;
             background-attachment: fixed;
+            background-color: #070b19;
         }
-        .text-neon {
-            text-shadow: 0 0 10px rgba(34, 197, 94, 0.6), 0 0 20px rgba(34, 197, 94, 0.4);
+        .font-oswald { font-family: 'Oswald', sans-serif; }
+        .text-glow-gold { text-shadow: 0 0 12px rgba(245, 158, 11, 0.7), 0 0 25px rgba(245, 158, 11, 0.4); }
+        
+        @keyframes brilliantGlow {
+            0%, 100% { box-shadow: 0 0 25px rgba(245, 158, 11, 0.6), inset 0 0 15px rgba(245, 158, 11, 0.3); border-color: rgba(245, 158, 11, 0.8); }
+            50% { box-shadow: 0 0 50px rgba(251, 191, 36, 1), inset 0 0 25px rgba(251, 191, 36, 0.5); border-color: rgba(251, 191, 36, 1); }
         }
+        .glow-gold-brilliant { animation: brilliantGlow 2s infinite ease-in-out; }
+
+        @keyframes speedLines {
+            0% { background-position: 0% 0%; opacity: 0.3; }
+            50% { opacity: 0.6; }
+            100% { background-position: 100% 100%; opacity: 0.3; }
+        }
+        .speedline-bg {
+            background: linear-gradient(45deg, rgba(239, 68, 68, 0.15) 25%, transparent 25%), 
+                        linear-gradient(-45deg, rgba(245, 158, 11, 0.15) 25%, transparent 25%);
+            background-size: 4px 4px;
+            animation: speedLines 0.5s infinite linear;
+        }
+
+        @keyframes frostMist {
+            0% { background-position: 0% 100%; opacity: 0.2; }
+            50% { opacity: 0.4; }
+            100% { background-position: 100% 0%; opacity: 0.2; }
+        }
+        .frost-bg {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 25%, transparent 25%),
+                        linear-gradient(225deg, rgba(147, 51, 234, 0.1) 25%, transparent 25%);
+            background-size: 8px 8px;
+            animation: frostMist 3s infinite linear;
+        }
+
+        @keyframes lightShine {
+            0% { left: -150%; }
+            30%, 100% { left: 150%; }
+        }
+        .top1-shimmer {
+            position: absolute; top: 0; left: -150%; width: 100%; height: 100%;
+            background: linear-gradient(120deg, transparent, rgba(255, 255, 255, 0) 30%, rgba(255, 215, 0, 0.2) 40%, rgba(255, 255, 255, 0.6) 50%, rgba(255, 215, 0, 0.2) 60%, transparent 70%);
+            transform: skewX(-25deg); animation: lightShine 3.5s infinite ease-in-out;
+        }
+
+        .glow-silver { box-shadow: 0 0 15px rgba(255, 255, 255, 0.25); }
+        .glow-bronze { box-shadow: 0 0 15px rgba(217, 119, 6, 0.25); }
+        .glow-fire { box-shadow: 0 0 25px rgba(239, 68, 68, 0.5); }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #ef4444; border-radius: 3px; }
+
+        .rank-item { transition: transform 1.2s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.3s; }
+        .podium-item { transition: all 1.2s cubic-bezier(0.34, 1.56, 0.64, 1); }
     </style>
 </head>
-<body class="min-h-screen text-slate-100 flex flex-col items-center p-4 sm:p-8 selection:bg-yellow-400 selection:text-black">
+<body class="text-slate-100 min-h-screen py-8 px-4 sm:px-6 lg:px-8">
 
-    <header class="text-center my-8 max-w-2xl animate-fade-in">
-        <div class="inline-block bg-yellow-500 text-slate-900 text-xs font-black px-4 py-1 rounded-full uppercase tracking-widest mb-3 shadow-lg shadow-yellow-500/20">
-            FIFA World Cup 2026 🇺🇸 🇨🇦 🇲🇽
-        </div>
-        <h1 class="text-3xl sm:text-5xl font-black tracking-tight text-white uppercase text-neon">
-            TRA CỨU <span class="text-green-400">DỰ ĐOÁN</span>
-        </h1>
-        <p class="text-slate-400 mt-2 text-sm sm:text-base">Nhập thông tin cá nhân để xem lại hành trình tiên tri của bạn!</p>
-    </header>
-
-    <main class="w-full max-w-md bg-slate-900/80 backdrop-blur-md border border-slate-700/50 p-6 sm:p-8 rounded-2xl shadow-2xl shadow-black/50">
-        <form id="searchForm" onsubmit="handleSearch(event)" class="space-y-5">
-            <div>
-                <label for="nickname" class="block text-xs font-bold uppercase tracking-wider text-green-400 mb-2">
-                    Nickname (Biệt danh hiển thị BXH)
-                </label>
-                <input type="text" id="nickname" required autocomplete="off"
-                    placeholder="Ví dụ: Pele_2026" 
-                    class="w-full bg-slate-800/85 border border-slate-600 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-green-400 focus:ring-2 focus:ring-green-400/20 transition-all font-medium">
-            </div>
-
-            <div>
-                <label for="email" class="block text-xs font-bold uppercase tracking-wider text-green-400 mb-2">
-                    Password (Email đăng ký)
-                </label>
-                <input type="email" id="email" required autocomplete="on"
-                    placeholder="name@example.com" 
-                    class="w-full bg-slate-800/85 border border-slate-600 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-green-400 focus:ring-2 focus:ring-green-400/20 transition-all font-medium">
-            </div>
-
-            <button type="submit" 
-                class="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-400 hover:to-emerald-500 text-white font-bold py-3.5 px-4 rounded-xl shadow-lg shadow-green-500/20 active:scale-[0.99] transition-all cursor-pointer text-center uppercase tracking-wider text-sm flex items-center justify-center gap-2">
-                ⚽ Bắt Đầu Tra Cứu
-            </button>
-        </form>
-    </main>
-
-    <section id="resultContainer" class="hidden w-full max-w-4xl mt-10 bg-slate-900/95 border-2 border-yellow-500/30 rounded-2xl p-6 shadow-2xl backdrop-blur-md">
+    <div class="max-w-5xl mx-auto">
         
-        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-slate-700 pb-4 mb-4 gap-2">
-            <div>
-                <h2 class="text-xl font-bold text-yellow-400 flex items-center gap-2">
-                    📋 KẾT QUẢ DỰ ĐOÁN
-                </h2>
-                <p class="text-xs text-slate-400 mt-1">Dữ liệu được cập nhật trực tiếp từ Ban Tổ Chức</p>
+        <header class="text-center mb-6 relative">
+            <div class="inline-flex items-center justify-center gap-4 mb-3 group relative">
+                <i class="fa-solid fa-bolt text-3xl sm:text-4xl text-orange-500 animate-bounce"></i>
+                <i class="fa-solid fa-soccer-ball text-4xl sm:text-5xl text-amber-400 text-glow-gold animate-spin" style="animation-duration: 8s;"></i>
+                <i class="fa-solid fa-bolt text-3xl sm:text-4xl text-red-500 animate-bounce"></i>
             </div>
-            <span id="userBadge" class="bg-blue-500 text-white font-bold px-3 py-1 rounded-lg text-xs uppercase tracking-wide">
-                -
-            </span>
-        </div>
+            <h1 class="font-oswald text-3xl sm:text-5xl lg:text-6xl font-bold tracking-wider text-amber-400 text-glow-gold uppercase italic">
+                Bảng Xếp Hạng Cao Thủ Dự Đoán World Cup 2026
+            </h1>
+            <p class="text-yellow-400 font-bold uppercase tracking-widest text-xs sm:text-sm mt-3 flex items-center justify-center gap-2 bg-black/40 px-4 py-1 rounded-full inline-block mx-auto">
+                <span class="inline-block w-2 h-2 rounded-full bg-red-500 animate-ping"></span>
+                thần rùa tương trợ - đoán bừa cũng trúng
+            </p>
+        </header>
 
-        <div class="flex border-b border-slate-700 mb-4 gap-2">
-            <button onclick="switchTab('group')" id="tabGroupBtn" class="px-4 py-2 font-bold text-sm rounded-t-lg transition-all border-b-2 border-green-500 text-green-400 bg-slate-800/50">
-                ⚽ VÒNG BẢNG
+        <div class="flex justify-center gap-3 mb-8">
+            <button id="tab1Btn" onclick="switchTab(1)" class="px-5 py-2.5 rounded-xl font-oswald uppercase tracking-wider font-bold text-sm transition-all duration-300 bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-slate-200">
+                <i class="fa-solid fa-trophy mr-1.5"></i>Vòng Bảng
             </button>
-            <button onclick="switchTab('knockout')" id="tabKnockoutBtn" class="px-4 py-2 font-bold text-sm rounded-t-lg transition-all border-b-2 border-transparent text-slate-400 hover:text-white">
-                🏆 VÒNG KNOCKOUT
+            <button id="tab2Btn" onclick="switchTab(2)" class="px-5 py-2.5 rounded-xl font-oswald uppercase tracking-wider font-bold text-sm transition-all duration-300 bg-amber-500 text-slate-950 shadow-lg shadow-amber-500/20 glow-gold">
+                <i class="fa-solid fa-fire mr-1.5"></i>Vòng Knockout
             </button>
         </div>
 
-        <div id="groupTableWrapper" class="overflow-x-auto rounded-xl border border-slate-800">
-            <table class="w-full text-sm text-left">
-                <thead class="bg-slate-800 text-slate-300 uppercase text-xs tracking-wider">
-                    <tr>
-                        <th class="px-4 py-3 font-bold text-green-400 w-1/2">Hạng mục dự đoán (Cột)</th>
-                        <th class="px-4 py-3 font-bold text-yellow-400 w-1/2">Nội dung bạn chọn</th>
-                    </tr>
-                </thead>
-                <tbody id="resultTableBody" class="divide-y divide-slate-800">
-                </tbody>
-            </table>
-        </div>
-
-        <div id="knockoutTableWrapper" class="hidden overflow-x-auto rounded-xl border border-slate-800">
-            <div class="bg-slate-800/80 p-3 px-4 text-sm font-bold text-yellow-400 flex justify-between items-center border-b border-slate-700">
-                <span>Tổng điểm Vòng Knockout tạm tính:</span>
-                <span id="totalKnockoutPoints" class="text-xl text-green-400 bg-slate-900 px-3 py-1 rounded-lg border border-green-500/30">0đ</span>
+        <section id="specialEventsContainer" class="hidden grid grid-cols-1 md:grid-cols-2 gap-6 mb-10 transform scale-95 opacity-0 transition-all duration-700">
+            
+            <div class="bg-gradient-to-br from-red-950/40 via-amber-950/50 to-slate-950/90 rounded-2xl border-2 border-orange-500/60 shadow-2xl overflow-hidden p-5 relative">
+                <div class="absolute inset-0 speedline-bg pointer-events-none opacity-40 z-0"></div>
+                <div class="relative z-10 flex flex-col sm:flex-row items-center justify-between gap-4 h-full">
+                    <div class="flex items-center gap-4">
+                        <div class="relative">
+                            <div class="w-16 h-16 rounded-xl bg-slate-950 border-2 border-yellow-400 p-0.5 flex items-center justify-center shadow-lg">
+                                <img id="leapAvatar" src="" class="w-full h-full object-cover rounded-lg" alt="Leap User">
+                            </div>
+                            <span class="absolute -bottom-2 -right-2 bg-amber-500 text-slate-950 font-oswald font-black text-[10px] px-1.5 py-0.5 rounded-full shadow border border-slate-950">HOT</span>
+                        </div>
+                        <div>
+                            <span class="bg-gradient-to-r from-orange-500 to-yellow-500 text-slate-950 text-[10px] font-black px-2 py-0.5 rounded uppercase tracking-wider font-oswald shadow">🔥 SIÊU CẤP BỨT TỐC</span>
+                            <h3 id="leapName" class="font-oswald text-xl font-bold text-yellow-400 tracking-wide uppercase truncate max-w-[180px] mt-0.5">--</h3>
+                            <p id="leapSubtext" class="text-[11px] text-slate-400 italic">Hạng: -- ➔ --</p>
+                        </div>
+                    </div>
+                    <div class="bg-slate-950/80 border border-orange-500/30 px-4 py-2 rounded-xl text-center min-w-[110px] shadow-inner">
+                        <span id="leapCount" class="font-oswald text-2xl font-black text-green-400 tracking-tight block animate-pulse">+0 BẬC</span>
+                    </div>
+                </div>
             </div>
-            <table class="w-full text-sm text-left">
-                <thead class="bg-slate-800 text-slate-300 uppercase text-xs tracking-wider">
-                    <tr>
-                        <th class="px-4 py-3 font-bold text-green-400">Trận Đấu</th>
-                        <th class="px-4 py-3 font-bold text-blue-400 text-center">Đáp Án BTC</th>
-                        <th class="px-4 py-3 font-bold text-yellow-400 text-center">Bạn Chọn</th>
-                        <th class="px-4 py-3 font-bold text-purple-400 text-center">NSHV</th>
-                        <th class="px-4 py-3 font-bold text-emerald-400 text-center">Điểm số</th>
-                    </tr>
-                </thead>
-                <tbody id="knockoutTableBody" class="divide-y divide-slate-800">
-                </tbody>
-            </table>
+
+            <div class="bg-gradient-to-br from-slate-950/90 via-indigo-950/30 to-purple-950/40 rounded-2xl border-2 border-blue-500/50 shadow-2xl overflow-hidden p-5 relative">
+                <div class="absolute inset-0 frost-bg pointer-events-none opacity-50 z-0"></div>
+                <div class="relative z-10 flex flex-col sm:flex-row items-center justify-between gap-4 h-full">
+                    <div class="flex items-center gap-4">
+                        <div class="relative">
+                            <div class="w-16 h-16 rounded-xl bg-slate-950 border-2 border-blue-400 p-0.5 flex items-center justify-center shadow-lg">
+                                <img id="fallAvatar" src="" class="w-full h-full object-cover rounded-lg" alt="Fall User">
+                            </div>
+                            <span class="absolute -bottom-2 -right-2 bg-blue-600 text-white font-oswald font-black text-[10px] px-1.5 py-0.5 rounded-full shadow border border-slate-950">XUI</span>
+                        </div>
+                        <div>
+                            <span class="bg-gradient-to-r from-blue-500 to-indigo-500 text-white text-[10px] font-black px-2 py-0.5 rounded uppercase tracking-wider font-oswald shadow">📉 CHÚA TỂ TỤT HẠNG</span>
+                            <h3 id="fallName" class="font-oswald text-xl font-bold text-blue-400 tracking-wide uppercase truncate max-w-[180px] mt-0.5">--</h3>
+                            <p id="fallSubtext" class="text-[11px] text-slate-400 italic">Hạng: -- ➔ --</p>
+                        </div>
+                    </div>
+                    <div class="bg-slate-950/80 border border-blue-500/30 px-4 py-2 rounded-xl text-center min-w-[110px] shadow-inner">
+                        <span id="fallCount" class="font-oswald text-2xl font-black text-red-400 tracking-tight block">-0 BẬC</span>
+                    </div>
+                </div>
+            </div>
+
+         </section>
+        <div class="grid grid-cols-1 sm:grid-cols-12 gap-4 items-center mb-8 bg-slate-900/80 backdrop-blur-md p-4 rounded-xl border border-slate-700 shadow-xl">
+            <div class="sm:col-span-12 relative">
+                <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+                <input type="text" id="searchKeyword" oninput="filterPlayers()" placeholder="Tìm kiếm tên cao thủ dự đoán..." 
+                       class="w-full bg-slate-950/80 border border-slate-700 focus:border-yellow-400 rounded-lg pl-11 pr-4 py-2.5 text-sm text-slate-100 outline-none transition-all">
+            </div>
         </div>
-    </section>
 
-    <script>
-        const URL_GROUP_STAGE = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQOu74BZum8hv_WCNc2lCqbSmV-YXWkwWTrQZ4LmAZgY8Tjj6d9DEA1h6P9E8_4qXWisZy9-atqMeUP/pub?gid=267813523&single=true&output=csv';
-        const URL_KNOCKOUT_STAGE = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQOu74BZum8hv_WCNc2lCqbSmV-YXWkwWTrQZ4LmAZgY8Tjj6d9DEA1h6P9E8_4qXWisZy9-atqMeUP/pub?gid=1421278402&single=true&output=csv';
+        <section id="podiumContainer" class="grid grid-cols-1 md:grid-cols-3 gap-6 items-end mb-14 px-4 sm:px-12 md:px-0 min-h-[320px]">
+        </section>
 
-        let globalNickname = "";
-        let currentGroupHtml = "";
-        let currentKnockoutHtml = "";
-        let totalKoPoints = 0;
+        <section class="bg-slate-900/80 backdrop-blur-lg rounded-2xl border border-slate-700 shadow-2xl mb-8 overflow-hidden">
+            <div class="grid grid-cols-12 gap-2 sm:gap-4 px-6 py-4 bg-slate-950/90 border-b border-slate-800 font-oswald uppercase tracking-wider text-xs sm:text-sm text-slate-300 font-bold relative z-10">
+                <div class="col-span-2 sm:col-span-1 text-center">Hạng</div>
+                <div class="col-span-6 sm:col-span-5">Tên Cao Thủ</div>
+                <div class="col-span-4 sm:col-span-2 text-center">Đúng / Tổng trận</div>
+                <div class="col-span-2 text-center hidden sm:block">Tỉ lệ đúng</div>
+                <div class="col-span-2 text-center hidden sm:block">Tổng Điểm</div>
+            </div>
+            <div id="rankingList" class="divide-y divide-slate-800/40 min-h-[100px] overflow-y-auto relative">
+            </div>
+        </section>
 
-        // Hàm loại bỏ khoảng trắng và viết thường để so sánh chuỗi chính xác tuyệt đối
-        function cleanStr(str) {
-            return (str || "").toString().trim().toLowerCase().replace(/\s+/g, '');
-        }
+        <footer class="text-center space-y-6 relative z-10">
+            <div class="inline-block bg-gradient-to-r from-red-600 to-amber-500 p-[2px] rounded-xl shadow-lg glow-fire animate-pulse w-full max-w-3xl mx-auto">
+                <div class="bg-[#070b19] px-6 py-4 rounded-xl text-left sm:text-center space-y-3">
+                    <p class="font-oswald text-sm sm:text-base tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-red-500 via-amber-400 to-red-500 font-bold uppercase italic leading-relaxed">
+                        ⚡ ĐƯỜNG ĐUA CÒN DÀI - VÀO KÈO NGAY ĐỂ LẬT ĐỔ NGÔI VƯƠNG! ⚡
+                    </p>
+                    
+                    <div id="scheduleContainer" class="text-xs sm:text-sm text-slate-300 font-medium space-y-1.5 bg-slate-950/40 p-3 rounded-lg border border-slate-800 text-left">
+                        <p><i class="fa-regular fa-clock text-amber-400 mr-1.5"></i><b>Trưa ngày 25 - 28/6:</b> Dự đoán các trận ngày 29/6</p>
+                        <p><i class="fa-regular fa-clock text-amber-400 mr-1.5"></i><b>Ngày 29/6 (đến 22:00):</b> Dự đoán các trận ngày 30/6 - 04/7</p>
+                        <p><i class="fa-regular fa-clock text-amber-400 mr-1.5"></i><b>Ngày 02/7 - 04/7 (Chốt 15:00):</b> Dự đoán các trận ngày 05/7 - 06/7</p>
+                        <p><i class="fa-regular fa-clock text-amber-400 mr-1.5"></i><b>Ngày 06/7:</b> Dự đoán các trận ngày 07/7 - 08/7</p>
+                        <p><i class="fa-regular fa-clock text-amber-400 mr-1.5"></i><b>Ngày 08/7 - 09/7:</b> Dự đoán các trận ngày 10/7 - 11/7</p>
+                        <p><i class="fa-regular fa-clock text-amber-400 mr-1.5"></i><b>Ngày 09/7 - 10/7:</b> Dự đoán trận ngày 12/7</p>
+                        <p><i class="fa-regular fa-clock text-amber-400 mr-1.5"></i><b>Ngày 12/7 - 14/7:</b> Dự đoán trận ngày 15/7</p>
+                        <p><i class="fa-regular fa-clock text-amber-400 mr-1.5"></i><b>Ngày 15/7:</b> Dự đoán trận ngày 16/7</p>
+                        <p><i class="fa-regular fa-clock text-amber-400 mr-1.5"></i><b>Ngày 16/7 - 18/7:</b> Dự đoán các trận ngày 19/7 - 20/7</p>
+                    </div>
+                    
+                    <div class="pt-2 text-center">
+                        <a href="https://quangbinh191-creator.github.io/tracuuwc2026/" 
+                           target="_blank" 
+                           class="inline-flex items-center gap-2 bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400 text-slate-950 font-black py-2.5 px-6 rounded-xl transition-all duration-200 transform hover:scale-105 active:scale-[0.98] shadow-lg shadow-yellow-500/20 text-xs sm:text-sm uppercase tracking-wider">
+                            <i class="fa-solid fa-magnifying-glass-chart text-base"></i>
+                            Tra cứu thông tin đã dự đoán tại đây
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </footer>
 
-        async function handleSearch(event) {
-            event.preventDefault();
-            
-            const nicknameInput = document.getElementById('nickname').value.trim();
-            const emailInput = document.getElementById('email').value.trim();
-            const resultContainer = document.getElementById('resultContainer');
-            
-            resultContainer.classList.add('hidden');
-            currentGroupHtml = "";
-            currentKnockoutHtml = "";
-            totalKoPoints = 0;
+    </div>
 
-            try {
-                // 1. XỬ LÝ VÒNG BẢNG
-                const resGroup = await fetch(URL_GROUP_STAGE);
-                const csvGroup = await resGroup.text();
-                let isGroupFound = false;
+<script>
+    let playersR1 = [];
+    let playersR2 = [];
+    let currentTab = 2; 
+    let currentSearchKeyword = "";
+    let isInitialLoad = true; 
 
-                Papa.parse(csvGroup, {
-                    header: false,
-                    complete: function(results) {
-                        const rows = results.data;
-                        if (rows.length >= 2) {
-                            const headers = rows[0];
-                            const idxNickname = headers.findIndex(h => h.trim().toLowerCase() === 'biệt danh');
-                            const idxEmail = headers.findIndex(h => h.trim().toLowerCase() === 'email');
+    const URL_R1_USER_PREDICTIONS = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQOu74BZum8hv_WCNc2lCqbSmV-YXWkwWTrQZ4LmAZgY8Tjj6d9DEA1h6P9E8_4qXWisZy9-atqMeUP/pub?gid=267813523&single=true&output=csv';
+    const URL_R1_MATCH_RESULTS = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQOu74BZum8hv_WCNc2lCqbSmV-YXWkwWTrQZ4LmAZgY8Tjj6d9DEA1h6P9E8_4qXWisZy9-atqMeUP/pub?gid=652215163&single=true&output=csv';
+    const URL_R2_DATA = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQOu74BZum8hv_WCNc2lCqbSmV-YXWkwWTrQZ4LmAZgY8Tjj6d9DEA1h6P9E8_4qXWisZy9-atqMeUP/pub?gid=1421278402&single=true&output=csv';
 
-                            if (idxNickname !== -1 && idxEmail !== -1) {
-                                let foundRow = rows.find((r, idx) => idx > 0 && r[idxNickname]?.trim().toLowerCase() === nicknameInput.toLowerCase() && r[idxEmail]?.trim().toLowerCase() === emailInput.toLowerCase());
-                                
-                                if (foundRow) {
-                                    isGroupFound = true;
-                                    globalNickname = foundRow[idxNickname]?.trim();
-                                    const maxColumns = Math.min(79, headers.length);
-                                    for (let colIdx = 0; colIdx < maxColumns; colIdx++) {
-                                        const columnName = headers[colIdx]?.trim() || `Cột ${colIdx + 1}`;
-                                        const userValue = foundRow[colIdx]?.trim() || '---';
-                                        const rowBg = colIdx % 2 === 0 ? 'bg-slate-900/40' : 'bg-slate-800/30';
-                                        currentGroupHtml += `
-                                            <tr class="${rowBg} hover:bg-slate-800/80 transition-colors">
-                                                <td class="px-4 py-3.5 font-semibold text-slate-300 border-r border-slate-800">${columnName}</td>
-                                                <td class="px-4 py-3.5 text-yellow-400 font-bold tracking-wide">${userValue}</td>
-                                            </tr>
-                                        `;
-                                    }
-                                }
-                            }
-                        }
+    const avatarColors = ['b6e3f4', 'c0aede', 'd1d4f9', 'ffd5dc', 'ffdfbf', 'c2f2d0', 'f4d8b6'];
+
+    // Hàm chuẩn hóa chuỗi chính xác để so sánh chống lệch khoảng trắng
+    function cleanString(str) {
+        return str ? str.toString().trim().toLowerCase().replace(/\s+/g, '') : '';
+    }
+
+    function parseCsvPromise(url) {
+        return new Promise((resolve, reject) => {
+            Papa.parse(url, {
+                download: true,
+                header: false,
+                complete: (results) => resolve(results.data),
+                error: (error) => reject(error)
+            });
+        });
+    }
+
+    async function fetchPlayersData() {
+        try {
+            const [r1UserRows, r1ResultRows, r2Rows] = await Promise.all([
+                parseCsvPromise(URL_R1_USER_PREDICTIONS),
+                parseCsvPromise(URL_R1_MATCH_RESULTS),
+                parseCsvPromise(URL_R2_DATA)
+            ]);
+
+            // ==========================================
+            // I. XỬ LÝ DỮ LIỆU LƯỢT 1 (GIỮ NGUYÊN GỐC)
+            // ==========================================
+            if (r1UserRows && r1UserRows.length >= 2 && r1ResultRows && r1ResultRows.length >= 2) {
+                const r1UserHeaders = r1UserRows[0];
+                const r1IdxNickname = r1UserHeaders.findIndex(h => h.toString().trim().toLowerCase() === 'biệt danh');
+                const r1ResultHeaders = r1ResultRows[0];
+                const r1OfficialResults = r1ResultRows[1] || [];
+                const r1PreviousResults = r1ResultRows[9] || [];
+                
+                let r1TotalAvailableMatches = 0;
+                for (let colIdx = 0; colIdx < Math.min(79, r1UserHeaders.length); colIdx++) {
+                    const columnName = r1UserHeaders[colIdx]?.toString() || '';
+                    const matchResultIdx = r1ResultHeaders.findIndex(h => h.toString().trim().toLowerCase() === columnName.toString().trim().toLowerCase());
+                    if (matchResultIdx !== -1 && r1OfficialResults[matchResultIdx]) {
+                        const val = r1OfficialResults[matchResultIdx].toString().trim();
+                        if (val !== '' && val !== '---') r1TotalAvailableMatches++;
                     }
-                });
-
-                // 2. XỬ LÝ VÒNG KNOCKOUT
-                const resKnockout = await fetch(URL_KNOCKOUT_STAGE);
-                const csvKnockout = await resKnockout.text();
-                let isKnockoutFound = false;
-
-                Papa.parse(csvKnockout, {
-                    header: false,
-                    complete: function(results) {
-                        const rows = results.data;
-                        if (rows.length < 4) return; 
-
-                        const rowMatches = rows[0];  // Hàng 1: Tên các trận đấu
-                        const rowBTC = rows[2];      // Hàng 3: Kết quả chung cuộc từ BTC
-                        
-                        const idxNickname = rowMatches.findIndex(h => h && h.trim().toLowerCase() === 'biệt danh');
-                        const idxEmail = rowMatches.findIndex(h => h && h.trim().toLowerCase() === 'email');
-                        const idxStar1 = rowMatches.findIndex(h => h && h.trim().toLowerCase() === 'ngôi sao hy vọng 1');
-                        const idxStar2 = rowMatches.findIndex(h => h && h.trim().toLowerCase() === 'ngôi sao hy vọng 2');
-
-                        if (idxNickname === -1 || idxEmail === -1) return;
-
-                        let foundUserRow = null;
-                        for (let i = 3; i < rows.length; i++) {
-                            if (rows[i][idxNickname]?.trim().toLowerCase() === nicknameInput.toLowerCase() &&
-                                rows[i][idxEmail]?.trim().toLowerCase() === emailInput.toLowerCase()) {
-                                foundUserRow = rows[i];
-                                break;
-                            }
-                        }
-
-                        if (foundUserRow) {
-                            isKnockoutFound = true;
-                            if(!globalNickname) globalNickname = foundUserRow[idxNickname]?.trim();
-
-                            // Lấy giá trị chuỗi đã được làm sạch của NSHV 1 & 2
-                            const nshv1Clean = cleanStr(foundUserRow[idxStar1]);
-                            const nshv2Clean = cleanStr(foundUserRow[idxStar2]);
-
-                            let matchCount = 0;
-                            for (let colIdx = 0; colIdx < rowMatches.length; colIdx++) {
-                                const matchName = rowMatches[colIdx]?.trim();
-                                
-                                if (!matchName || 
-                                    colIdx === idxNickname || 
-                                    colIdx === idxEmail || 
-                                    colIdx === idxStar1 || 
-                                    colIdx === idxStar2 ||
-                                    matchName.toLowerCase().includes('thời gian') ||
-                                    matchName.toLowerCase().includes('tổng điểm')) {
-                                    continue;
-                                }
-
-                                matchCount++;
-                                const btcResult = rowBTC[colIdx]?.trim() || '';
-                                const userPredict = foundUserRow[colIdx]?.trim() || '';
-                                
-                                // So sánh chuỗi đã được chuẩn hóa để nhận diện Ngôi Sao Hy Vọng chính xác hơn
-                                const currentMatchClean = cleanStr(matchName);
-                                const isStar = (currentMatchClean === nshv1Clean || currentMatchClean === nshv2Clean) && userPredict !== '';
-                                
-                                let points = 0;
-                                let pointsClass = "text-slate-400";
-                                let pointsStr = "0";
-
-                                // Chỉ tính điểm khi BTC đã cập nhật kết quả và Người chơi có chọn đáp án
-                                if (btcResult !== '' && btcResult.toLowerCase() !== 'chưa có' && userPredict !== '' && userPredict !== '---') {
-                                    const isCorrect = cleanStr(userPredict) === cleanStr(btcResult);
-                                    if (isCorrect) {
-                                        points = isStar ? 2 : 1;
-                                        pointsClass = "text-green-400 font-black";
-                                        pointsStr = `+${points}`;
-                                    } else {
-                                        points = isStar ? -1 : 0;
-                                        pointsClass = isStar ? "text-red-500 font-black" : "text-slate-400";
-                                        pointsStr = points.toString();
-                                    }
-                                    totalKoPoints += points;
-                                } else {
-                                    pointsStr = "---";
-                                }
-
-                                const rowBg = matchCount % 2 === 0 ? 'bg-slate-900/40' : 'bg-slate-800/30';
-
-                                currentKnockoutHtml += `
-                                    <tr class="${rowBg} hover:bg-slate-800/80 transition-colors text-center">
-                                        <td class="px-4 py-3.5 font-semibold text-slate-300 text-left border-r border-slate-800">${matchName}</td>
-                                        <td class="px-4 py-3.5 text-blue-300 font-medium">${btcResult || 'Chưa có'}</td>
-                                        <td class="px-4 py-3.5 text-yellow-400 font-bold">${userPredict || '---'}</td>
-                                        <td class="px-4 py-3.5">${isStar ? '⭐' : '—'}</td>
-                                        <td class="px-4 py-3.5 ${pointsClass}">${pointsStr}</td>
-                                    </tr>
-                                `;
-                            }
-                        }
-                    }
-                });
-
-                await new Promise(resolve => setTimeout(resolve, 400));
-
-                if (!isGroupFound && !isKnockoutFound) {
-                    alert('❌ Sai Nickname hoặc Email đăng ký rồi! Vui lòng kiểm tra kỹ lại.');
-                    return;
                 }
 
-                document.getElementById('userBadge').innerText = `🎮 ${globalNickname || nicknameInput}`;
-                document.getElementById('resultTableBody').innerHTML = currentGroupHtml || `<tr><td colspan="2" class="p-4 text-center text-slate-500">Không có dữ liệu vòng bảng</td></tr>`;
-                document.getElementById('knockoutTableBody').innerHTML = currentKnockoutHtml || `<tr><td colspan="5" class="p-4 text-center text-slate-500">Không có dữ liệu vòng knockout</td></tr>`;
-                document.getElementById('totalKnockoutPoints').innerText = `${totalKoPoints}đ`;
+                let calculatedR1 = [];
+                for (let i = 1; i < r1UserRows.length; i++) {
+                    const currentRow = r1UserRows[i];
+                    if (!currentRow || currentRow.length === 0) continue;
+                    const nickname = currentRow[r1IdxNickname]?.toString().trim();
+                    if (!nickname) continue;
 
-                switchTab('group');
-                resultContainer.classList.remove('hidden');
-                resultContainer.scrollIntoView({ behavior: 'smooth' });
+                    let totalScore = 0, correctMatches = 0, prevScore = 0, prevMatches = 0;
 
-            } catch (error) {
-                alert('Không thể kết nối đến hệ thống Google Sheet. Hãy kiểm tra lại kết nối mạng hoặc liên hệ Admin.');
-                console.error(error);
+                    for (let colIdx = 0; colIdx < Math.min(79, r1UserHeaders.length); colIdx++) {
+                        const columnName = r1UserHeaders[colIdx]?.toString() || '';
+                        const userValue = currentRow[colIdx]?.toString().trim() || '';
+                        if (!userValue) continue;
+                        
+                        const matchResultIdx = r1ResultHeaders.findIndex(h => h.toString().trim().toLowerCase() === columnName.toString().trim().toLowerCase());
+                        if (matchResultIdx === -1) continue;
+
+                        let correctValue = r1OfficialResults[matchResultIdx]?.toString().trim() || '---';
+                        if (correctValue !== '' && correctValue !== '---') {
+                            if (userValue.toString().trim().toLowerCase() === correctValue.toString().trim().toLowerCase()) {
+                                const isX2 = columnName.toLowerCase().includes('[trận x2 điểm]');
+                                totalScore += isX2 ? 2 : 1;
+                                correctMatches += 1;
+                            }
+                        }
+
+                        let prevCorrectValue = r1PreviousResults[matchResultIdx]?.toString().trim() || '---';
+                        if (prevCorrectValue !== '' && prevCorrectValue !== '---') {
+                            if (userValue.toString().trim().toLowerCase() === prevCorrectValue.toString().trim().toLowerCase()) {
+                                const isX2 = columnName.toLowerCase().includes('[trận x2 điểm]');
+                                prevScore += isX2 ? 2 : 1;
+                                prevMatches += 1;
+                            }
+                        }
+                    }
+
+                    let winRate = r1TotalAvailableMatches > 0 ? Math.round((correctMatches / r1TotalAvailableMatches) * 100) : 0;
+                    calculatedR1.push({
+                        id: i, name: nickname, matches: correctMatches, totalMatches: r1TotalAvailableMatches,
+                        winRate: winRate, score: totalScore, prevScore: prevScore, prevMatches: prevMatches,
+                        seed: nickname, bg: avatarColors[i % avatarColors.length], prevRank: null, actualRank: null
+                    });
+                }
+
+                buildRankData(calculatedR1);
+                playersR1 = calculatedR1;
             }
+
+            // ==========================================
+            // II. XỬ LÝ DỮ LIỆU LƯỢT 2 (CẬP NHẬT LOGIC MỚI)
+            // ==========================================
+            if (r2Rows && r2Rows.length >= 4) {
+                const r2Headers = r2Rows[0];
+                const r2PreviousResults = r2Rows[1] || []; 
+                const r2OfficialResults = r2Rows[2] || []; 
+                const r2IdxNickname = r2Headers.findIndex(h => h && h.toString().trim().toLowerCase() === 'biệt danh');
+
+                let r2TotalAvailableMatches = 0;
+                for (let colIdx = 9; colIdx < r2Headers.length; colIdx++) {
+                    const val = r2OfficialResults[colIdx]?.toString().trim();
+                    if (val && val !== '' && val !== '---' && val.toLowerCase() !== 'chưa có') r2TotalAvailableMatches++;
+                }
+
+                let calculatedR2 = [];
+                for (let i = 3; i < r2Rows.length; i++) {
+                    const currentRow = r2Rows[i];
+                    if (!currentRow || currentRow.length === 0) continue;
+                    const nickname = currentRow[r2IdxNickname]?.toString().trim();
+                    if (!nickname) continue;
+
+                    // Lấy ra giá trị chuỗi đã làm sạch tuyệt đối của NSHV 1 & 2
+                    const star1MatchClean = cleanString(currentRow[7]);
+                    const star2MatchClean = cleanString(currentRow[8]);
+
+                    let totalScore = 0, correctMatches = 0, prevScore = 0, prevMatches = 0;
+
+                    for (let colIdx = 9; colIdx < r2Headers.length; colIdx++) {
+                        const matchHeader = r2Headers[colIdx];
+                        if (!matchHeader) continue;
+
+                        const columnNameClean = cleanString(matchHeader);
+                        const userValue = currentRow[colIdx]?.toString().trim() || '';
+                        
+                        // Kiểm tra xem trận đấu ở cột này có được đặt Ngôi sao hy vọng không
+                        const isStar = (star1MatchClean && columnNameClean === star1MatchClean) || 
+                                       (star2MatchClean && columnNameClean === star2MatchClean);
+
+                        // --- Tính điểm bảng hiện tại (Official) ---
+                        let correctValue = r2OfficialResults[colIdx]?.toString().trim() || '';
+                        if (correctValue !== '' && correctValue !== '---' && correctValue.toLowerCase() !== 'chưa có' && userValue !== '' && userValue !== '---') {
+                            const isCorrect = cleanString(userValue) === cleanString(correctValue);
+                            if (isCorrect) {
+                                correctMatches += 1;
+                                if (isStar) {
+                                    totalScore += 2; // Đúng + có NSHV = +2đ
+                                } else {
+                                    const isX2 = matchHeader.toLowerCase().includes('[trận x2 điểm]');
+                                    totalScore += isX2 ? 2 : 1; 
+                                }
+                            } else {
+                                if (isStar) totalScore -= 1; // Sai + có NSHV = -1đ
+                            }
+                        }
+
+                        // --- Tính điểm bảng cũ (Previous) ---
+                        let prevCorrectValue = r2PreviousResults[colIdx]?.toString().trim() || '';
+                        if (prevCorrectValue !== '' && prevCorrectValue !== '---' && prevCorrectValue.toLowerCase() !== 'chưa có' && userValue !== '' && userValue !== '---') {
+                            const isPrevCorrect = cleanString(userValue) === cleanString(prevCorrectValue);
+                            if (isPrevCorrect) {
+                                prevMatches += 1;
+                                if (isStar) {
+                                    prevScore += 2;
+                                } else {
+                                    const isX2 = matchHeader.toLowerCase().includes('[trận x2 điểm]');
+                                    prevScore += isX2 ? 2 : 1;
+                                }
+                            } else {
+                                if (isStar) prevScore -= 1;
+                            }
+                        }
+                    }
+
+                    let winRate = r2TotalAvailableMatches > 0 ? Math.round((correctMatches / r2TotalAvailableMatches) * 100) : 0;
+                    calculatedR2.push({
+                        id: i, name: nickname, matches: correctMatches, totalMatches: r2TotalAvailableMatches,
+                        winRate: winRate, score: totalScore, prevScore: prevScore, prevMatches: prevMatches,
+                        seed: nickname, bg: avatarColors[i % avatarColors.length], prevRank: null, actualRank: null
+                    });
+                }
+
+                buildRankData(calculatedR2);
+                playersR2 = calculatedR2;
+            }
+
+            triggerIntroAnimation();
+
+        } catch (error) {
+            console.error("Lỗi khi tải dữ liệu từ Google Sheets:", error);
+            document.getElementById('rankingList').innerHTML = `<div class="text-center py-10 text-red-400 italic">Đang gặp lỗi kết nối với Google Sheets công khai. Vui lòng kiểm tra lại cấu hình chia sẻ!</div>`;
+        }
+    }
+
+    function buildRankData(playersArray) {
+        let prevSorted = [...playersArray].sort((a, b) => {
+            if (b.prevScore !== a.prevScore) return b.prevScore - a.prevScore;
+            if (b.prevMatches !== a.prevMatches) return b.prevMatches - a.prevMatches;
+            return a.id - b.id;
+        });
+        prevSorted.forEach((p, idx) => { p.prevRank = idx + 1; });
+        playersArray.forEach(p => {
+            const match = prevSorted.find(o => o.name === p.name);
+            p.prevRank = match ? match.prevRank : null;
+        });
+
+        let nextSorted = [...playersArray].sort((a, b) => {
+            if (b.score !== a.score) return b.score - a.score;
+            if (b.matches !== a.matches) return b.matches - a.matches;
+            return a.id - b.id;
+        });
+        nextSorted.forEach((p, idx) => { p.actualRank = idx + 1; });
+        playersArray.forEach(p => {
+            const match = nextSorted.find(o => o.name === p.name);
+            p.actualRank = match ? match.actualRank : null;
+        });
+    }
+
+    function triggerIntroAnimation() {
+        let activePlayers = currentTab === 1 ? playersR1 : playersR2;
+        let maxLeapPlayer = null, maxLeapValue = -1;
+        let maxFallPlayer = null, maxFallValue = -1;
+
+        activePlayers.forEach(p => {
+            if (p.prevRank && p.actualRank) {
+                let change = p.prevRank - p.actualRank;
+                if (change > maxLeapValue) { maxLeapValue = change; maxLeapPlayer = p; }
+                let fall = p.actualRank - p.prevRank;
+                if (fall > maxFallValue) { maxFallValue = fall; maxFallPlayer = p; }
+            }
+        });
+
+        if ((maxLeapPlayer && maxLeapValue > 0) || (maxFallPlayer && maxFallValue > 0)) {
+            showSpecialEventsBanner(maxLeapPlayer, maxLeapValue, maxFallPlayer, maxFallValue);
+        } else {
+            document.getElementById('specialEventsContainer').classList.add('hidden');
         }
 
-        function switchTab(tabName) {
-            const tabGroupBtn = document.getElementById('tabGroupBtn');
-            const tabKnockoutBtn = document.getElementById('tabKnockoutBtn');
-            const groupTableWrapper = document.getElementById('groupTableWrapper');
-            const knockoutTableWrapper = document.getElementById('knockoutTableWrapper');
+        if (isInitialLoad) {
+            renderLeaderboard(true); 
+            setTimeout(() => {
+                isInitialLoad = false;
+                renderLeaderboard(false);
+            }, 800);
+        } else {
+            renderLeaderboard(false);
+        }
+    }
 
-            if (tabName === 'group') {
-                tabGroupBtn.classList.add('border-green-500', 'text-green-400', 'bg-slate-800/50');
-                tabGroupBtn.classList.remove('border-transparent', 'text-slate-400');
-                groupTableWrapper.classList.remove('hidden');
+    function showSpecialEventsBanner(leapP, leapV, fallP, fallV) {
+        const container = document.getElementById('specialEventsContainer');
+        
+        if (leapP && leapV > 0) {
+            document.getElementById('leapAvatar').src = getChibiAvatarUrl(leapP.seed, leapP.bg);
+            document.getElementById('leapName').innerHTML = leapP.actualRank === 1 ? `<i class="fa-solid fa-crown text-amber-400 animate-bounce mr-1"></i>${leapP.name}` : leapP.name;
+            document.getElementById('leapCount').innerText = `+${leapV} BẬC`;
+            document.getElementById('leapSubtext').innerText = `Hạng cũ: ${leapP.prevRank} ➔ Hạng mới: ${leapP.actualRank}`;
+        }
 
-                tabKnockoutBtn.classList.remove('border-green-500', 'text-green-400', 'bg-slate-800/50');
-                tabKnockoutBtn.classList.add('border-transparent', 'text-slate-400');
-                knockoutTableWrapper.classList.add('hidden');
+        if (fallP && fallV > 0) {
+            document.getElementById('fallAvatar').src = getChibiAvatarUrl(fallP.seed, fallP.bg);
+            document.getElementById('fallName').innerText = fallP.name;
+            document.getElementById('fallCount').innerText = `-${fallV} BẬC`;
+            document.getElementById('fallSubtext').innerText = `Hạng cũ: ${fallP.prevRank} ➔ Hạng mới: ${fallP.actualRank}`;
+        }
+
+        container.classList.remove('hidden');
+        setTimeout(() => {
+            container.classList.remove('scale-95', 'opacity-0');
+            container.classList.add('scale-100', 'opacity-100');
+        }, 100);
+    }
+
+    function initData() {
+        fetchPlayersData();
+        setInterval(fetchPlayersData, 300000); 
+    }
+
+    function switchTab(tabNum) {
+        currentTab = tabNum;
+        const btn1 = document.getElementById('tab1Btn');
+        const btn2 = document.getElementById('tab2Btn');
+        const scheduleContainer = document.getElementById('scheduleContainer');
+        
+        const rankingList = document.getElementById('rankingList');
+        rankingList.innerHTML = '';
+
+        if (tabNum === 1) {
+            btn1.className = "px-5 py-2.5 rounded-xl font-oswald uppercase tracking-wider font-bold text-sm transition-all duration-300 bg-amber-500 text-slate-950 shadow-lg shadow-amber-500/20 glow-gold";
+            btn2.className = "px-5 py-2.5 rounded-xl font-oswald uppercase tracking-wider font-bold text-sm transition-all duration-300 bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-slate-200";
+            
+            scheduleContainer.className = "text-xs sm:text-sm text-slate-300 font-medium space-y-1 bg-slate-950/40 p-3 rounded-lg border border-slate-800 text-left sm:text-center";
+            scheduleContainer.innerHTML = `
+                <p><b class="text-red-400">Lượt 1:</b> Các trận từ 12 - 18/6 | Thời gian bình chọn: từ 05/6 đến 10/6 (Chốt deadline: 15:00)</p>
+                <p><b class="text-amber-400">Lượt 2:</b> Các trận từ 19 - 24/6 | Thời gian bình chọn: từ 17 - 18/6 (Chốt deadline: 15:00)</p>
+                <p><b class="text-emerald-400">Lượt 3:</b> Các trận từ 25 - 28/6 | Thời gian bình chọn: từ 23 - 24/6 (Chốt deadline: 15:00)</p>
+            `;
+        } else {
+            btn2.className = "px-5 py-2.5 rounded-xl font-oswald uppercase tracking-wider font-bold text-sm transition-all duration-300 bg-amber-500 text-slate-950 shadow-lg shadow-amber-500/20 glow-gold";
+            btn1.className = "px-5 py-2.5 rounded-xl font-oswald uppercase tracking-wider font-bold text-sm transition-all duration-300 bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-slate-200";
+            
+            scheduleContainer.className = "text-xs sm:text-sm text-slate-300 font-medium space-y-1.5 bg-slate-950/40 p-3 rounded-lg border border-slate-800 text-left";
+            scheduleContainer.innerHTML = `
+                <p><i class="fa-regular fa-clock text-amber-400 mr-1.5"></i><b>Trưa ngày 25 - 28/6:</b> Dự đoán các trận ngày 29/6</p>
+                <p><i class="fa-regular fa-clock text-amber-400 mr-1.5"></i><b>Ngày 29/6 (đến 22:00):</b> Dự đoán các trận ngày 30/6 - 04/7</p>
+                <p><i class="fa-regular fa-clock text-amber-400 mr-1.5"></i><b>Ngày 02/7 - 04/7 (Chốt 15:00):</b> Dự đoán các trận ngày 05/7 - 06/7</p>
+                <p><i class="fa-regular fa-clock text-amber-400 mr-1.5"></i><b>Ngày 06/7:</b> Dự đoán các trận ngày 07/7 - 08/7</p>
+                <p><i class="fa-regular fa-clock text-amber-400 mr-1.5"></i><b>Ngày 08/7 - 09/7:</b> Dự đoán các trận ngày 10/7 - 11/7</p>
+                <p><i class="fa-regular fa-clock text-amber-400 mr-1.5"></i><b>Ngày 09/7 - 10/7:</b> Dự đoán trận ngày 12/7</p>
+                <p><i class="fa-regular fa-clock text-amber-400 mr-1.5"></i><b>Ngày 12/7 - 14/7:</b> Dự đoán trận ngày 15/7</p>
+                <p><i class="fa-regular fa-clock text-amber-400 mr-1.5"></i><b>Ngày 15/7:</b> Dự đoán trận ngày 16/7</p>
+                <p><i class="fa-regular fa-clock text-amber-400 mr-1.5"></i><b>Ngày 16/7 - 18/7:</b> Dự đoán các trận ngày 19/7 - 20/7</p>
+            `;
+        }
+        
+        triggerIntroAnimation();
+    }
+
+    function getRankChangeHTML(change) {
+        if (change > 0) {
+            return `<span class="text-emerald-400 text-xs font-sans font-bold inline-flex items-center gap-0.5 ml-1 animate-pulse" title="Tăng ${change} bậc"><i class="fa-solid fa-caret-up"></i>${change}</span>`;
+        } else if (change < 0) {
+            return `<span class="text-red-400 text-xs font-sans font-bold inline-flex items-center gap-0.5 ml-1" title="Giảm ${Math.abs(change)} bậc"><i class="fa-solid fa-caret-down"></i>${Math.abs(change)}</span>`;
+        }
+        return `<span class="text-slate-500 text-xs font-sans ml-1"><i class="fa-solid fa-minus text-[10px]"></i></span>`;
+    }
+
+    function renderLeaderboard(forceRenderOld = false) {
+        let activePlayers = currentTab === 1 ? playersR1 : playersR2;
+        let sortedPlayers = [...activePlayers];
+        
+        if (forceRenderOld) {
+            sortedPlayers.sort((a, b) => {
+                if (b.prevScore !== a.prevScore) return b.prevScore - a.prevScore;
+                if (b.prevMatches !== a.prevMatches) return b.prevMatches - a.prevMatches;
+                return a.id - b.id;
+            });
+        } else {
+            sortedPlayers.sort((a, b) => {
+                if (b.score !== a.score) return b.score - a.score;
+                if (b.matches !== a.matches) return b.matches - a.matches;
+                return a.id - b.id;
+            });
+        }
+        
+        let rankedData = sortedPlayers.map((p, idx) => {
+            const displayRank = idx + 1;
+            let rankChange = 0;
+            if (p.prevRank !== null && p.actualRank !== null) {
+                rankChange = p.prevRank - p.actualRank;
+            }
+            return { ...p, currentDisplayRank: displayRank, rankChange: forceRenderOld ? 0 : rankChange };
+        });
+
+        if (currentSearchKeyword !== "") {
+            rankedData = rankedData.filter(p => p.name.toLowerCase().includes(currentSearchKeyword.toLowerCase()));
+        }
+
+        const top3 = rankedData.filter(p => p.currentDisplayRank <= 3);
+        const individualList = rankedData.filter(p => p.currentDisplayRank > 3);
+
+        renderPodium(top3, forceRenderOld);
+        renderTableRows(individualList, rankedData.length === 0, forceRenderOld);
+    }
+
+    function getChibiAvatarUrl(seed, bg) {
+        return `https://api.dicebear.com/9.x/bottts-neutral/svg?seed=${encodeURIComponent(seed)}&backgroundColor=${bg}`;
+    }
+
+    function renderPodium(top3Data, forceRenderOld) {
+        const podiumContainer = document.getElementById('podiumContainer');
+        podiumContainer.innerHTML = '';
+
+        if(top3Data.length === 0) return;
+
+        let displayOrder = [];
+        const rank1 = top3Data.find(p => p.currentDisplayRank === 1);
+        const rank2 = top3Data.find(p => p.currentDisplayRank === 2);
+        const rank3 = top3Data.find(p => p.currentDisplayRank === 3);
+
+        if (window.innerWidth >= 768) {
+            if (rank2) displayOrder.push(rank2);
+            if (rank1) displayOrder.push(rank1);
+            if (rank3) displayOrder.push(rank3);
+        } else {
+            if (rank1) displayOrder.push(rank1);
+            if (rank2) displayOrder.push(rank2);
+            if (rank3) displayOrder.push(rank3);
+        }
+
+        displayOrder.forEach(player => {
+            let cardStyle = "", badgeStyle = "", rankLabel = "", shimmerLayer = "";
+            
+            const displayScore = forceRenderOld ? player.prevScore : player.score;
+            const displayMatches = forceRenderOld ? player.prevMatches : player.matches;
+
+            if(player.currentDisplayRank === 1) {
+                cardStyle = "bg-gradient-to-b from-amber-950/90 to-slate-950/95 border-amber-400 glow-gold-brilliant scale-105 md:scale-110 z-10 p-8";
+                badgeStyle = "from-amber-500 to-yellow-400 text-slate-950 shadow-yellow-500/50 shadow-md";
+                rankLabel = `<i class="fa-solid fa-crown text-base text-red-600 animate-bounce"></i> <span class="tracking-widest">VƯƠNG GIẢ TOP 1</span> <i class="fa-solid fa-star text-xs text-yellow-300 animate-spin"></i>`;
+                shimmerLayer = `<div class="absolute inset-0 rounded-2xl overflow-hidden pointer-events-none z-0"><div class="top1-shimmer"></div></div>`;
+            } else if (player.currentDisplayRank === 2) {
+                cardStyle = "bg-slate-950/90 border-slate-400 glow-silver p-6";
+                badgeStyle = "bg-slate-400 text-slate-950";
+                rankLabel = `<i class="fa-solid fa-medal mr-1"></i> Top 2 Cao Thủ`;
             } else {
-                tabKnockoutBtn.classList.add('border-green-500', 'text-green-400', 'bg-slate-800/50');
-                tabKnockoutBtn.classList.remove('border-transparent', 'text-slate-400');
-                knockoutTableWrapper.classList.remove('hidden');
-
-                tabGroupBtn.classList.remove('border-green-500', 'text-green-400', 'bg-slate-800/50');
-                tabGroupBtn.classList.add('border-transparent', 'text-slate-400');
-                groupTableWrapper.classList.add('hidden');
+                cardStyle = "bg-slate-950/90 border-amber-700 glow-bronze p-6";
+                badgeStyle = "bg-amber-700 text-white";
+                rankLabel = `<i class="fa-solid fa-medal mr-1"></i> Top 3 Bám Đuổi`;
             }
+
+            const div = document.createElement('div');
+            div.className = `podium-item backdrop-blur-md border-2 rounded-2xl text-center transform hover:-translate-y-2 transition-all duration-300 relative group ${cardStyle}`;
+            div.innerHTML = `
+                ${shimmerLayer}
+                <div class="absolute -top-5 left-1/2 -translate-x-1/2 font-bold px-4 py-1 rounded-full text-xs font-oswald uppercase tracking-wider shadow-lg bg-gradient-to-r ${badgeStyle} z-10 whitespace-nowrap">
+                    ${rankLabel}
+                </div>
+                <div class="relative inline-block mb-4 mt-2 z-10">
+                    <div class="w-20 h-20 mx-auto rounded-2xl overflow-hidden shadow-lg border border-slate-700 bg-slate-900 flex items-center justify-center">
+                        <img src="${getChibiAvatarUrl(player.seed, player.bg)}" alt="${player.name}" class="w-full h-full object-cover">
+                    </div>
+                    <span class="absolute bottom-0 right-0 ${badgeStyle.split(' ')[0]} text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center border border-slate-950 shadow z-10">${player.currentDisplayRank}</span>
+                </div>
+                <h3 class="font-bold text-lg text-slate-100 truncate group-hover:text-yellow-400 transition-colors z-10 relative px-2 flex items-center justify-center gap-1">
+                    ${player.name} ${getRankChangeHTML(player.rankChange)}
+                </h3>
+                <p class="text-slate-300 text-xs mb-3 font-semibold z-10 relative">
+                    Đúng <span class="text-green-400">${displayMatches}/${player.totalMatches}</span> trận (${player.winRate}%)
+                </p>
+                <div class="inline-block bg-slate-900/90 px-4 py-1.5 rounded-xl border border-slate-700 shadow-inner z-10 relative">
+                    <span class="font-oswald text-xl font-bold text-yellow-400 tracking-wide">${displayScore.toLocaleString()} <span class="text-xs text-slate-300 font-sans">Điểm</span></span>
+                </div>
+            `;
+            podiumContainer.appendChild(div);
+        });
+    }
+
+    // Kết xuất giao diện danh sách bảng
+    function renderTableRows(listData, isEmpty, forceRenderOld) {
+        const rankingList = document.getElementById('rankingList');
+        
+        if (isEmpty) {
+            rankingList.innerHTML = `<div class="text-center py-10 text-slate-400 italic">Không tìm thấy thành viên nào khớp dữ liệu...</div>`;
+            rankingList.style.height = "auto";
+            return;
         }
-    </script>
+
+        const rowHeight = 72; 
+        rankingList.style.height = `${listData.length * rowHeight}px`;
+
+        listData.forEach((player, index) => {
+            let rowDiv = document.getElementById(`player-row-${player.name.replace(/\s+/g, '-')}`);
+            
+            if (!rowDiv) {
+                rowDiv = document.createElement('div');
+                rowDiv.id = `player-row-${player.name.replace(/\s+/g, '-')}`;
+                rowDiv.className = "rank-item absolute left-0 right-0 grid grid-cols-12 gap-2 sm:gap-4 px-6 py-4 items-center bg-slate-900/50 hover:bg-yellow-400/10 border-b border-slate-800/40 group";
+                rankingList.appendChild(rowDiv);
+            }
+
+            rowDiv.style.transform = `translateY(${index * rowHeight}px)`;
+            rowDiv.style.height = `${rowHeight}px`;
+
+            const displayScore = forceRenderOld ? player.prevScore : player.score;
+            const displayMatches = forceRenderOld ? player.prevMatches : player.matches;
+
+            rowDiv.innerHTML = `
+                <div class="col-span-2 sm:col-span-1 text-center font-oswald font-bold text-lg text-slate-400 flex items-center justify-center gap-1">
+                    <span>${player.currentDisplayRank < 10 ? '0' + player.currentDisplayRank : player.currentDisplayRank}</span>
+                    ${getRankChangeHTML(player.rankChange)}
+                </div>
+                <div class="col-span-6 sm:col-span-5 flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl border border-slate-700 overflow-hidden hidden sm:flex flex-shrink-0 bg-slate-900 shadow">
+                        <img src="${getChibiAvatarUrl(player.seed, player.bg)}" alt="${player.name}" class="w-full h-full object-cover">
+                    </div>
+                    <span class="font-semibold truncate text-slate-100 group-hover:text-yellow-400 transition-colors">${player.name}</span>
+                </div>
+                <div class="col-span-4 sm:col-span-2 text-center font-semibold text-slate-200">
+                    <span class="text-emerald-400">${displayMatches}</span> / ${player.totalMatches}
+                </div>
+                <div class="col-span-2 text-center font-semibold text-amber-400 hidden sm:block">
+                    ${player.winRate}%
+                </div>
+                <div class="col-span-2 text-right font-oswald font-bold text-base text-yellow-400 tracking-wide pr-2 hidden sm:block">
+                    ${displayScore.toLocaleString()}
+                </div>
+                
+                <div class="col-span-12 flex justify-between items-center sm:hidden pt-1 border-t border-slate-800/20 text-[10px] text-slate-400">
+                    <span>Tỉ lệ: <b class="text-amber-400">${player.winRate}%</b></span>
+                    <span>Tổng điểm: <b class="text-yellow-400">${displayScore} Điểm</b></span>
+                </div>
+            `;
+        });
+
+        const validIds = listData.map(player => `player-row-${player.name.replace(/\s+/g, '-')}`);
+        Array.from(rankingList.children).forEach(child => {
+            if (child.id && !validIds.includes(child.id)) {
+                child.remove();
+            }
+        });
+    }
+
+    function filterPlayers() {
+        currentSearchKeyword = document.getElementById('searchKeyword').value.trim();
+        renderLeaderboard(false);
+    }
+
+    initData();
+    window.addEventListener('resize', () => renderLeaderboard(false));
+</script>
 </body>
 </html>
