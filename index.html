@@ -8,86 +8,81 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&display=swap');
-        body { font-family: 'Montserrat', sans-serif; background: linear-gradient(135deg, rgba(6, 78, 59, 0.8) 0%, rgba(15, 23, 42, 0.85) 100%), url('https://phongvu.vn/cong-nghe/wp-content/uploads/2022/12/hinh-nen-bong-da-1.png'); background-size: cover; background-position: center; background-attachment: fixed; }
-        .text-neon { text-shadow: 0 0 10px rgba(34, 197, 94, 0.6), 0 0 20px rgba(34, 197, 94, 0.4); }
+        body { font-family: 'Montserrat', sans-serif; background: linear-gradient(135deg, #064e3b 0%, #0f172a 100%); }
     </style>
 </head>
-<body class="min-h-screen text-slate-100 flex flex-col items-center p-4 sm:p-8">
+<body class="min-h-screen text-slate-100 p-4">
 
-    <header class="text-center my-8 max-w-2xl">
-        <h1 class="text-3xl sm:text-5xl font-black text-white uppercase text-neon">TRA CỨU DỰ ĐOÁN</h1>
+    <header class="text-center my-8">
+        <h1 class="text-3xl sm:text-5xl font-black text-white uppercase">TRA CỨU DỰ ĐOÁN</h1>
     </header>
 
-    <main class="w-full max-w-md bg-slate-900/80 p-6 rounded-2xl shadow-2xl" id="searchBox">
-        <form id="searchForm" onsubmit="handleSearch(event)" class="space-y-5">
-            <input type="text" id="nickname" required placeholder="Nickname" class="w-full bg-slate-800 p-3 rounded-xl border border-slate-600">
-            <input type="email" id="email" required placeholder="Email" class="w-full bg-slate-800 p-3 rounded-xl border border-slate-600">
-            <button type="submit" class="w-full bg-green-600 hover:bg-green-500 text-white font-bold py-3 rounded-xl uppercase">⚽ Bắt Đầu Tra Cứu</button>
+    <main class="w-full max-w-md mx-auto bg-slate-900/80 p-8 rounded-2xl border border-slate-700">
+        <form id="searchForm" onsubmit="handleSearch(event)" class="space-y-4">
+            <input type="text" id="nickname" required placeholder="Nickname" class="w-full bg-slate-800 p-3 rounded-lg border border-slate-600">
+            <input type="email" id="email" required placeholder="Email" class="w-full bg-slate-800 p-3 rounded-lg border border-slate-600">
+            <button type="submit" class="w-full bg-green-600 py-3 rounded-lg font-bold">⚽ TRA CỨU</button>
         </form>
     </main>
 
-    <section id="resultContainer" class="hidden w-full max-w-2xl mt-10">
-        <div class="flex gap-2 mb-4 justify-center">
-            <button onclick="changeTab('vongLoai')" id="btnVongLoai" class="px-6 py-2 bg-green-600 rounded-xl font-bold transition">Vòng Loại</button>
-            <button onclick="changeTab('knockOut')" id="btnKnockOut" class="px-6 py-2 bg-slate-800 rounded-xl font-bold transition">Vòng Knock-out</button>
+    <section id="resultContainer" class="hidden w-full max-w-4xl mx-auto mt-10 bg-slate-900/90 rounded-2xl p-6 border border-yellow-500/30">
+        <div class="flex gap-4 mb-6 border-b border-slate-700">
+            <button onclick="switchTab('vongBang')" id="btnVongBang" class="pb-2 border-b-2 border-green-500 font-bold">Vòng Bảng</button>
+            <button onclick="switchTab('vongLoai')" id="btnVongLoai" class="pb-2 border-b-2 border-transparent hover:border-slate-500">Vòng Loại</button>
         </div>
-
-        <div class="bg-slate-900/95 border-2 border-yellow-500/30 rounded-2xl p-6 backdrop-blur-md">
-            <div id="userBadge" class="mb-4 text-yellow-400 font-bold text-lg"></div>
-            <div class="overflow-x-auto rounded-xl border border-slate-800">
-                <table class="w-full text-sm text-left">
-                    <tbody id="resultTableBody"></tbody>
-                </table>
+        
+        <div id="tableContent" class="overflow-x-auto">
             </div>
-        </div>
     </section>
 
     <script>
-        const URLS = {
-            vongLoai: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQOu74BZum8hv_WCNc2lCqbSmV-YXWkwWTrQZ4LmAZgY8Tjj6d9DEA1h6P9E8_4qXWisZy9-atqMeUP/pub?gid=267813523&single=true&output=csv',
-            knockOut: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQOu74BZum8hv_WCNc2lCqbSmV-YXWkwWTrQZ4LmAZgY8Tjj6d9DEA1h6P9E8_4qXWisZy9-atqMeUP/pub?gid=1421278402&single=true&output=csv'
-        };
-
-        let currentTab = 'vongLoai';
-
-        function changeTab(tab) {
-            currentTab = tab;
-            document.getElementById('btnVongLoai').className = tab === 'vongLoai' ? 'px-6 py-2 bg-green-600 rounded-xl font-bold' : 'px-6 py-2 bg-slate-800 rounded-xl font-bold';
-            document.getElementById('btnKnockOut').className = tab === 'knockOut' ? 'px-6 py-2 bg-green-600 rounded-xl font-bold' : 'px-6 py-2 bg-slate-800 rounded-xl font-bold';
-            handleSearch(null); // Gọi lại hàm tìm kiếm với tab mới
-        }
+        // Cấu hình URL Sheet chung của bạn
+        const SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQOu74BZum8hv_WCNc2lCqbSmV-YXWkwWTrQZ4LmAZgY8Tjj6d9DEA1h6P9E8_4qXWisZy9-atqMeUP/pub?gid=1421278402&single=true&output=csv';
+        let fullData = [];
+        let currentUser = null;
 
         async function handleSearch(event) {
-            if(event) event.preventDefault();
-            
+            event.preventDefault();
             const nickname = document.getElementById('nickname').value.trim();
             const email = document.getElementById('email').value.trim();
-            
-            const response = await fetch(URLS[currentTab]);
+
+            const response = await fetch(SHEET_URL);
             const csvText = await response.text();
+            fullData = Papa.parse(csvText).data;
 
-            Papa.parse(csvText, {
-                complete: function(results) {
-                    const rows = results.data;
-                    const headers = rows[0];
-                    // Tìm dòng khớp (giả định cột 0 là nickname, cột 1 là email)
-                    const userRow = rows.find(r => r[0]?.trim().toLowerCase() === nickname.toLowerCase() && r[1]?.trim().toLowerCase() === email.toLowerCase());
+            // Tìm người chơi từ dòng 4 (index 3)
+            currentUser = fullData.slice(3).find(row => 
+                row[0]?.trim().toLowerCase() === nickname.toLowerCase() && 
+                row[1]?.trim().toLowerCase() === email.toLowerCase()
+            );
 
-                    if(!userRow) { alert('Không tìm thấy dữ liệu!'); return; }
+            if (!currentUser) return alert('Không tìm thấy người chơi!');
+            document.getElementById('resultContainer').classList.remove('hidden');
+            renderTable('vongBang');
+        }
 
-                    document.getElementById('resultContainer').classList.remove('hidden');
-                    document.getElementById('userBadge').innerText = `🎮 ${nickname}`;
-                    
-                    let html = '';
-                    headers.forEach((h, i) => {
-                        html += `<tr class="border-b border-slate-800">
-                                    <td class="px-4 py-3 font-bold text-green-400">${h}</td>
-                                    <td class="px-4 py-3 text-yellow-400 font-bold">${userRow[i] || '---'}</td>
-                                 </tr>`;
-                    });
-                    document.getElementById('resultTableBody').innerHTML = html;
+        function renderTable(tab) {
+            const container = document.getElementById('tableContent');
+            const headers = fullData[0]; // Giả định dòng 1 là tiêu đề
+            const resultRow = fullData[2]; // Dòng 3 là đáp án BTC
+            
+            let html = `<table class="w-full text-sm"><thead><tr><th>Hạng mục</th><th>Bạn chọn</th><th>Kết quả</th></tr></thead><tbody>`;
+            
+            // Logic tùy chỉnh cột theo tab ở đây...
+            // Ví dụ: Vòng bảng lấy cột 2-20, Vòng loại lấy 21-40
+            fullData.slice(3).forEach((row, i) => {
+                if(row[0] === currentUser[0]) { // Hiển thị dòng của người đó
+                    html += `<tr><td>Ví dụ</td><td>${row[2]}</td><td>${resultRow[2]}</td></tr>`;
                 }
             });
+
+            container.innerHTML = html + `</tbody></table>`;
+        }
+
+        function switchTab(tab) {
+            document.getElementById('btnVongBang').className = tab === 'vongBang' ? "pb-2 border-b-2 border-green-500 font-bold" : "pb-2 border-b-2 border-transparent";
+            document.getElementById('btnVongLoai').className = tab === 'vongLoai' ? "pb-2 border-b-2 border-green-500 font-bold" : "pb-2 border-b-2 border-transparent";
+            renderTable(tab);
         }
     </script>
 </body>
