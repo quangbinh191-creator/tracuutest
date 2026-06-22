@@ -62,7 +62,7 @@
     </main>
 
     <!-- CONTAINER KẾT QUẢ -->
-    <section id="resultContainer" class="hidden w-full max-w-4xl mt-10 bg-slate-900/95 border-2 border-yellow-500/30 rounded-2xl p-6 shadow-2xl backdrop-blur-md">
+    <section id="resultContainer" class="hidden w-full max-w-5xl mt-10 bg-slate-900/95 border-2 border-yellow-500/30 rounded-2xl p-6 shadow-2xl backdrop-blur-md">
         
         <!-- HEADER KẾT QUẢ -->
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-slate-700 pb-4 mb-4 gap-2">
@@ -87,7 +87,7 @@
             </button>
         </div>
 
-        <!-- BẢNG KẾT QUẢ VÒNG BẢNG (ĐÃ ĐỒNG BỘ LOGIC TÍNH ĐIỂM) -->
+        <!-- BẢNG KẾT QUẢ VÒNG BẢNG -->
         <div id="groupTableWrapper" class="overflow-x-auto rounded-xl border border-slate-800">
             <div class="bg-slate-800/80 p-3 px-4 text-sm font-bold text-yellow-400 flex justify-between items-center border-b border-slate-700">
                 <span>Tổng điểm Vòng Bảng tạm tính:</span>
@@ -131,7 +131,6 @@
     </section>
 
     <script>
-        // Cấu hình các đường dẫn URL CSV từ Google Sheets công khai
         const URL_GROUP_PREDICTIONS = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQOu74BZum8hv_WCNc2lCqbSmV-YXWkwWTrQZ4LmAZgY8Tjj6d9DEA1h6P9E8_4qXWisZy9-atqMeUP/pub?gid=267813523&single=true&output=csv';
         const URL_GROUP_RESULTS = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQOu74BZum8hv_WCNc2lCqbSmV-YXWkwWTrQZ4LmAZgY8Tjj6d9DEA1h6P9E8_4qXWisZy9-atqMeUP/pub?gid=652215163&single=true&output=csv';
         const URL_KNOCKOUT_DATA = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQOu74BZum8hv_WCNc2lCqbSmV-YXWkwWTrQZ4LmAZgY8Tjj6d9DEA1h6P9E8_4qXWisZy9-atqMeUP/pub?gid=1421278402&single=true&output=csv';
@@ -142,10 +141,27 @@
         let totalGroupPoints = 0;
         let totalKnockoutPoints = 0;
 
-        // Hàm chuẩn hóa chuỗi tuyệt đối để so khớp Ngôi sao hy vọng chống lệch ký tự lạ
+        // Hàm làm sạch chuỗi chuyên sâu để chống lệch dấu câu/khoảng trắng
         function cleanStr(str) {
             return (str || "").toString().trim().toLowerCase().replace(/\s+/g, '');
         }
+
+        // Cập nhật bộ lọc rác ẩn triệt để các cột chứa từ "hi vọng" hoặc "hy vọng"
+        const isTrashCol = h => {
+            if (!h) return true;
+            const low = h.toLowerCase();
+            return low.includes('thời gian') || 
+                   low.includes('mã số') || 
+                   low.includes('nhân viên') || 
+                   low.includes('tổng điểm') || 
+                   low.includes('ngôi sao') || 
+                   low.includes('hi vọng') || 
+                   low.includes('hy vọng') || 
+                   low === 'id' || 
+                   low === 'tên' ||
+                   low === 'email' ||
+                   low === 'biệt danh';
+        };
 
         async function handleSearch(event) {
             event.preventDefault();
@@ -161,16 +177,15 @@
             totalKnockoutPoints = 0;
 
             try {
-                // Tải song song tất cả các nguồn dữ liệu về thiết bị xử lý dữ liệu
                 const [resGroupPred, resGroupRes, resKnockout] = await Promise.all([
                     fetch(URL_GROUP_PREDICTIONS).then(r => r.text()),
                     fetch(URL_GROUP_RESULTS).then(r => r.text()),
                     fetch(URL_KNOCKOUT_DATA).then(r => r.text())
                 ]);
 
-                // =========================================================================
-                // I. XỬ LÝ ĐỒNG BỘ TAB VÒNG BẢNG (Tính điểm nâng cao như Vòng 2)
-                // =========================================================================
+                // ==========================================
+                // I. XỬ LÝ TAB VÒNG BẢNG
+                // ==========================================
                 let isGroupFound = false;
                 let groupPredRows = Papa.parse(resGroupPred, { header: false }).data;
                 let groupResRows = Papa.parse(resGroupRes, { header: false }).data;
@@ -178,12 +193,10 @@
                 if (groupPredRows.length >= 2 && groupResRows.length >= 2) {
                     const headersPred = groupPredRows[0];
                     const headersRes = groupResRows[0];
-                    const rowBTCRes = groupResRows[1] || []; // Hàng 2 trong file kết quả là đáp án BTC vòng bảng
+                    const rowBTCRes = groupResRows[1] || []; 
 
-                    const idxNickG = headersPred.findIndex(h => h && h.trim().toLowerCase() === 'biệt danh');
-                    const idxEmailG = headersPred.findIndex(h => h && h.trim().toLowerCase() === 'email');
-                    const idxStar1G = headersPred.findIndex(h => h && h.trim().toLowerCase() === 'ngôi sao hy vọng 1');
-                    const idxStar2G = headersPred.findIndex(h => h && h.trim().toLowerCase() === 'ngôi sao hy vọng 2');
+                    const idxNickG = headersPred.findIndex(h => h && h.toLowerCase().includes('biệt danh'));
+                    const idxEmailG = headersPred.findIndex(h => h && h.toLowerCase().includes('email'));
 
                     if (idxNickG !== -1 && idxEmailG !== -1) {
                         let foundRowG = groupPredRows.find((r, idx) => idx > 0 && r[idxNickG]?.trim().toLowerCase() === nicknameInput.toLowerCase() && r[idxEmailG]?.trim().toLowerCase() === emailInput.toLowerCase());
@@ -192,28 +205,31 @@
                             isGroupFound = true;
                             globalNickname = foundRowG[idxNickG]?.trim();
 
-                            const nshv1CleanG = idxStar1G !== -1 ? cleanStr(foundRowG[idxStar1G]) : "";
-                            const nshv2CleanG = idxStar2G !== -1 ? cleanStr(foundRowG[idxStar2G]) : "";
+                            // Tự động nhận diện Ngôi Sao Hy Vọng bằng cách quét xem có đáp án nào của User trùng 100% với tên trận đấu không
+                            const validHeadersCleanG = headersPred.map(h => cleanStr(h));
+                            let starChoicesCleanG = [];
+                            for (let col = 0; col < foundRowG.length; col++) {
+                                let valClean = cleanStr(foundRowG[col]);
+                                if (valClean.length > 20 && validHeadersCleanG.includes(valClean)) {
+                                    starChoicesCleanG.push(valClean);
+                                }
+                            }
 
                             let matchCountG = 0;
-                            const maxColumnsG = Math.min(79, headersPred.length);
-
-                            for (let colIdx = 0; colIdx < maxColumnsG; colIdx++) {
+                            for (let colIdx = 0; colIdx < headersPred.length; colIdx++) {
                                 const matchName = headersPred[colIdx]?.trim();
                                 
-                                if (!matchName || colIdx === idxNickG || colIdx === idxEmailG || colIdx === idxStar1G || colIdx === idxStar2G || matchName.toLowerCase().includes('thời gian') || matchName.toLowerCase().includes('mã số nhân viên') || matchName.toLowerCase().includes('tổng điểm')) {
-                                    continue;
-                                }
+                                if (isTrashCol(matchName)) continue;
 
                                 matchCountG++;
                                 const userPredict = foundRowG[colIdx]?.trim() || '';
                                 
-                                // Tìm cột đáp án tương ứng từ sheet kết quả dựa trên tên cột trùng nhau
                                 const resColIdx = headersRes.findIndex(h => cleanStr(h) === cleanStr(matchName));
                                 const btcResult = resColIdx !== -1 ? rowBTCRes[resColIdx]?.trim() : '';
 
                                 const currentMatchClean = cleanStr(matchName);
-                                const isStar = (currentMatchClean === nshv1CleanG || currentMatchClean === nshv2CleanG) && userPredict !== '';
+                                // Kiểm tra nếu tên cột trận đấu nằm trong mảng các trận được NSHV
+                                const isStar = starChoicesCleanG.includes(currentMatchClean) && userPredict !== '' && userPredict !== '---';
 
                                 let points = 0;
                                 let pointsClass = "text-slate-400";
@@ -222,12 +238,7 @@
                                 if (btcResult !== '' && btcResult.toLowerCase() !== 'chưa có' && btcResult !== '---' && userPredict !== '' && userPredict !== '---') {
                                     const isCorrect = cleanStr(userPredict) === cleanStr(btcResult);
                                     if (isCorrect) {
-                                        if (isStar) {
-                                            points = 2;
-                                        } else {
-                                            const isX2 = matchName.toLowerCase().includes('[trận x2 điểm]');
-                                            points = isX2 ? 2 : 1;
-                                        }
+                                        points = isStar ? 2 : (matchName.toLowerCase().includes('[trận x2 điểm]') ? 2 : 1);
                                         pointsClass = "text-green-400 font-black";
                                         pointsStr = `+${points}`;
                                     } else {
@@ -243,7 +254,7 @@
                                 const rowBg = matchCountG % 2 === 0 ? 'bg-slate-900/40' : 'bg-slate-800/30';
                                 currentGroupHtml += `
                                     <tr class="${rowBg} hover:bg-slate-800/80 transition-colors text-center">
-                                        <td class="px-4 py-3.5 font-semibold text-slate-300 text-left border-r border-slate-800">${matchName}</td>
+                                        <td class="px-4 py-3.5 font-semibold text-slate-300 text-left border-r border-slate-800 w-1/3">${matchName}</td>
                                         <td class="px-4 py-3.5 text-blue-300 font-medium">${btcResult || 'Chưa có'}</td>
                                         <td class="px-4 py-3.5 text-yellow-400 font-bold">${userPredict || '---'}</td>
                                         <td class="px-4 py-3.5">${isStar ? '⭐' : '—'}</td>
@@ -255,20 +266,18 @@
                     }
                 }
 
-                // =========================================================================
-                // II. XỬ LÝ TAB VÒNG KNOCKOUT (Giữ nguyên logic chuẩn xác cũ)
-                // =========================================================================
+                // ==========================================
+                // II. XỬ LÝ TAB VÒNG KNOCKOUT
+                // ==========================================
                 let isKnockoutFound = false;
                 let knockoutRows = Papa.parse(resKnockout, { header: false }).data;
 
                 if (knockoutRows.length >= 4) {
                     const rowMatches = knockoutRows[0];
-                    const rowBTC = knockoutRows[2]; // Dòng số 3 là đáp án kết quả chung cuộc của BTC Vòng 2
+                    const rowBTC = knockoutRows[2]; 
                     
-                    const idxNickname = rowMatches.findIndex(h => h && h.trim().toLowerCase() === 'biệt danh');
-                    const idxEmail = rowMatches.findIndex(h => h && h.trim().toLowerCase() === 'email');
-                    const idxStar1 = rowMatches.findIndex(h => h && h.trim().toLowerCase() === 'ngôi sao hy vọng 1');
-                    const idxStar2 = rowMatches.findIndex(h => h && h.trim().toLowerCase() === 'ngôi sao hy vọng 2');
+                    const idxNickname = rowMatches.findIndex(h => h && h.toLowerCase().includes('biệt danh'));
+                    const idxEmail = rowMatches.findIndex(h => h && h.toLowerCase().includes('email'));
 
                     if (idxNickname !== -1 && idxEmail !== -1) {
                         let foundUserRow = null;
@@ -284,23 +293,29 @@
                             isKnockoutFound = true;
                             if(!globalNickname) globalNickname = foundUserRow[idxNickname]?.trim();
 
-                            const nshv1Clean = cleanStr(foundUserRow[idxStar1]);
-                            const nshv2Clean = cleanStr(foundUserRow[idxStar2]);
+                            // Nhận diện chéo Ngôi sao hy vọng siêu chuẩn
+                            const validHeadersCleanK = rowMatches.map(h => cleanStr(h));
+                            let starChoicesCleanK = [];
+                            for (let col = 0; col < foundUserRow.length; col++) {
+                                let valClean = cleanStr(foundUserRow[col]);
+                                // Nếu câu trả lời của user > 20 ký tự & trùng y xì đúc với tên 1 tiêu đề cột, chắc chắn là chọn NSHV
+                                if (valClean.length > 20 && validHeadersCleanK.includes(valClean)) {
+                                    starChoicesCleanK.push(valClean);
+                                }
+                            }
 
                             let matchCount = 0;
                             for (let colIdx = 0; colIdx < rowMatches.length; colIdx++) {
                                 const matchName = rowMatches[colIdx]?.trim();
                                 
-                                if (!matchName || colIdx === idxNickname || colIdx === idxEmail || colIdx === idxStar1 || colIdx === idxStar2 || matchName.toLowerCase().includes('thời gian') || matchName.toLowerCase().includes('tổng điểm')) {
-                                    continue;
-                                }
+                                if (isTrashCol(matchName)) continue; // Bỏ qua tự động các cột không phải trận đấu
 
                                 matchCount++;
                                 const btcResult = rowBTC[colIdx]?.trim() || '';
                                 const userPredict = foundUserRow[colIdx]?.trim() || '';
                                 
                                 const currentMatchClean = cleanStr(matchName);
-                                const isStar = (currentMatchClean === nshv1Clean || currentMatchClean === nshv2Clean) && userPredict !== '';
+                                const isStar = starChoicesCleanK.includes(currentMatchClean) && userPredict !== '' && userPredict !== '---';
                                 
                                 let points = 0;
                                 let pointsClass = "text-slate-400";
@@ -308,13 +323,10 @@
 
                                 if (btcResult !== '' && btcResult.toLowerCase() !== 'chưa có' && btcResult !== '---' && userPredict !== '' && userPredict !== '---') {
                                     const isCorrect = cleanStr(userPredict) === cleanStr(btcResult);
+                                    
+                                    // LOGIC TÍNH ĐIỂM CHUẨN
                                     if (isCorrect) {
-                                        if (isStar) {
-                                            points = 2;
-                                        } else {
-                                            const isX2 = matchName.toLowerCase().includes('[trận x2 điểm]');
-                                            points = isX2 ? 2 : 1;
-                                        }
+                                        points = isStar ? 2 : (matchName.toLowerCase().includes('[trận x2 điểm]') ? 2 : 1);
                                         pointsClass = "text-green-400 font-black";
                                         pointsStr = `+${points}`;
                                     } else {
@@ -330,7 +342,7 @@
                                 const rowBg = matchCount % 2 === 0 ? 'bg-slate-900/40' : 'bg-slate-800/30';
                                 currentKnockoutHtml += `
                                     <tr class="${rowBg} hover:bg-slate-800/80 transition-colors text-center">
-                                        <td class="px-4 py-3.5 font-semibold text-slate-300 text-left border-r border-slate-800">${matchName}</td>
+                                        <td class="px-4 py-3.5 font-semibold text-slate-300 text-left border-r border-slate-800 w-1/3">${matchName}</td>
                                         <td class="px-4 py-3.5 text-blue-300 font-medium">${btcResult || 'Chưa có'}</td>
                                         <td class="px-4 py-3.5 text-yellow-400 font-bold">${userPredict || '---'}</td>
                                         <td class="px-4 py-3.5">${isStar ? '⭐' : '—'}</td>
@@ -342,13 +354,11 @@
                     }
                 }
 
-                // Kiểm tra kết quả tìm kiếm của hệ thống
                 if (!isGroupFound && !isKnockoutFound) {
                     alert('❌ Sai Nickname hoặc Email đăng ký rồi! Vui lòng kiểm tra kỹ lại.');
                     return;
                 }
 
-                // Render đẩy giao diện bảng dữ liệu HTML lên màn hình
                 document.getElementById('userBadge').innerText = `🎮 ${globalNickname || nicknameInput}`;
                 document.getElementById('resultTableBody').innerHTML = currentGroupHtml || `<tr><td colspan="5" class="p-4 text-center text-slate-500">Không tìm thấy dữ liệu vòng bảng</td></tr>`;
                 document.getElementById('knockoutTableBody').innerHTML = currentKnockoutHtml || `<tr><td colspan="5" class="p-4 text-center text-slate-500">Không tìm thấy dữ liệu vòng knockout</td></tr>`;
