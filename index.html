@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TRA CỨU VÒNG KNOCKOUT - WORLD CUP 2026 🏆</title>
+    <title>TRA CỨU DỰ ĐOÁN WORLD CUP 2026 🏆</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
     <style>
@@ -29,12 +29,23 @@
             FIFA World Cup 2026 🇺🇸 🇨🇦 🇲🇽
         </div>
         <h1 class="text-3xl sm:text-5xl font-black tracking-tight text-white uppercase text-neon">
-            TRA CỨU <span class="text-green-400">KNOCKOUT</span>
+            TRA CỨU <span class="text-green-400">DỰ ĐOÁN</span>
         </h1>
-        <p class="text-slate-400 mt-2 text-sm sm:text-base">Nhập thông tin cá nhân để xem lại hành trình dự đoán Vòng Knockout!</p>
+        <p class="text-slate-400 mt-2 text-sm sm:text-base">Chọn vòng đấu và nhập thông tin cá nhân để xem điểm của bạn!</p>
     </header>
 
     <main class="w-full max-w-md bg-slate-900/80 backdrop-blur-md border border-slate-700/50 p-6 sm:p-8 rounded-2xl shadow-2xl shadow-black/50">
+        
+        <!-- THANH CHUYỂN TAB -->
+        <div class="flex space-x-2 mb-6 bg-slate-800/50 p-1 rounded-xl">
+            <button type="button" id="tabGroup" onclick="switchTab('group')" class="flex-1 py-2.5 rounded-lg bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold text-sm shadow-md transition-all uppercase tracking-wide">
+                Vòng Loại
+            </button>
+            <button type="button" id="tabKnockout" onclick="switchTab('knockout')" class="flex-1 py-2.5 rounded-lg text-slate-400 font-bold text-sm hover:bg-slate-700/50 hover:text-white transition-all uppercase tracking-wide">
+                Knockout
+            </button>
+        </div>
+
         <form id="searchForm" onsubmit="handleSearch(event)" class="space-y-5">
             <div>
                 <label for="nickname" class="block text-xs font-bold uppercase tracking-wider text-green-400 mb-2">
@@ -64,8 +75,8 @@
     <section id="resultContainer" class="hidden w-full max-w-2xl mt-10 bg-slate-900/95 border-2 border-yellow-500/30 rounded-2xl p-6 shadow-2xl backdrop-blur-md">
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-slate-700 pb-4 mb-4 gap-2">
             <div>
-                <h2 class="text-xl font-bold text-yellow-400 flex items-center gap-2">
-                    📋 KẾT QUẢ DỰ ĐOÁN KNOCKOUT
+                <h2 id="resultTitle" class="text-xl font-bold text-yellow-400 flex items-center gap-2">
+                    📋 KẾT QUẢ DỰ ĐOÁN
                 </h2>
                 <p class="text-xs text-slate-400 mt-1">Dữ liệu được cập nhật trực tiếp từ Ban Tổ Chức</p>
             </div>
@@ -89,8 +100,44 @@
     </section>
 
     <script>
-        // Link CSV dành riêng cho Vòng Knockout
-        const URL_GOOGLE_SHEET_CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQOu74BZum8hv_WCNc2lCqbSmV-YXWkwWTrQZ4LmAZgY8Tjj6d9DEA1h6P9E8_4qXWisZy9-atqMeUP/pub?gid=1421278402&single=true&output=csv';
+        // CẤU HÌNH DỮ LIỆU 2 VÒNG ĐẤU
+        const CONFIG = {
+            group: {
+                url: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQOu74BZum8hv_WCNc2lCqbSmV-YXWkwWTrQZ4LmAZgY8Tjj6d9DEA1h6P9E8_4qXWisZy9-atqMeUP/pub?gid=267813523&single=true&output=csv',
+                startRow: 1, // Dữ liệu người chơi bắt đầu từ dòng thứ 2 (index 1)
+                title: '📋 KẾT QUẢ VÒNG LOẠI'
+            },
+            knockout: {
+                url: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQOu74BZum8hv_WCNc2lCqbSmV-YXWkwWTrQZ4LmAZgY8Tjj6d9DEA1h6P9E8_4qXWisZy9-atqMeUP/pub?gid=1421278402&single=true&output=csv',
+                startRow: 3, // Dữ liệu người chơi bắt đầu từ dòng thứ 4 (index 3)
+                title: '📋 KẾT QUẢ VÒNG KNOCKOUT'
+            }
+        };
+
+        // Mặc định là vòng loại
+        let currentMode = 'group';
+
+        // Hàm chuyển đổi Tab
+        function switchTab(mode) {
+            currentMode = mode;
+            const tabGroup = document.getElementById('tabGroup');
+            const tabKnockout = document.getElementById('tabKnockout');
+            const resultContainer = document.getElementById('resultContainer');
+            
+            // Ẩn bảng kết quả khi đổi tab để yêu cầu người dùng tra cứu lại
+            resultContainer.classList.add('hidden');
+
+            const activeClass = "flex-1 py-2.5 rounded-lg bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold text-sm shadow-md transition-all uppercase tracking-wide";
+            const inactiveClass = "flex-1 py-2.5 rounded-lg text-slate-400 font-bold text-sm hover:bg-slate-700/50 hover:text-white transition-all uppercase tracking-wide";
+
+            if (mode === 'group') {
+                tabGroup.className = activeClass;
+                tabKnockout.className = inactiveClass;
+            } else {
+                tabKnockout.className = activeClass;
+                tabGroup.className = inactiveClass;
+            }
+        }
 
         async function handleSearch(event) {
             event.preventDefault();
@@ -100,55 +147,62 @@
             const resultContainer = document.getElementById('resultContainer');
             const resultTableBody = document.getElementById('resultTableBody');
             const userBadge = document.getElementById('userBadge');
+            const resultTitle = document.getElementById('resultTitle');
+
+            // Lấy cấu hình của Vòng hiện tại đang chọn
+            const config = CONFIG[currentMode];
 
             try {
-                const response = await fetch(URL_GOOGLE_SHEET_CSV);
+                const response = await fetch(config.url);
                 const csvText = await response.text();
 
                 Papa.parse(csvText, {
                     header: false,
                     complete: function(results) {
                         const rows = results.data;
-                        // Phải có ít nhất 4 dòng (3 dòng tiêu đề + 1 dòng dữ liệu người chơi)
-                        if (rows.length < 4) {
+                        if (rows.length <= config.startRow) {
                             alert('Không tìm thấy đủ dữ liệu trên hệ thống Sheet.');
                             return;
                         }
 
-                        // Xử lý tạo Tiêu đề tự động từ 3 dòng đầu (Dòng 1, 2, 3) 
-                        // Để đảm bảo không sót tên khi sheet có gộp ô (Merge cells)
                         let compositeHeaders = [];
-                        const numCols = Math.max(rows[0]?.length || 0, rows[1]?.length || 0, rows[2]?.length || 0);
                         
-                        let lastH0 = ''; // Hỗ trợ gộp ô theo chiều ngang ở dòng đầu
-                        for (let c = 0; c < numCols; c++) {
-                            let h0 = rows[0] && rows[0][c] ? rows[0][c].trim() : '';
-                            let h1 = rows[1] && rows[1][c] ? rows[1][c].trim() : '';
-                            let h2 = rows[2] && rows[2][c] ? rows[2][c].trim() : '';
-                            
-                            if (h0 !== '') lastH0 = h0; else h0 = lastH0;
-
-                            // Ghép tên các dòng để tạo thành tiêu đề cột hoàn chỉnh
-                            let parts = [h0, h1, h2].filter(Boolean);
-                            let uniqueParts = [...new Set(parts)];
-                            let colName = uniqueParts.length > 0 ? uniqueParts.join(' - ') : `Cột ${c + 1}`;
-                            compositeHeaders.push(colName);
+                        // XỬ LÝ TIÊU ĐỀ RIÊNG BIỆT CHO TỪNG VÒNG
+                        if (currentMode === 'group') {
+                            // Vòng loại: Chỉ lấy 1 dòng tiêu đề (Dòng đầu tiên)
+                            const headers = rows[0];
+                            for(let c = 0; c < headers.length; c++) {
+                                compositeHeaders.push(headers[c]?.trim() || `Cột ${c + 1}`);
+                            }
+                        } else {
+                            // Vòng Knockout: Ghép từ 3 dòng tiêu đề (Dòng 1, 2, 3)
+                            const numCols = Math.max(rows[0]?.length || 0, rows[1]?.length || 0, rows[2]?.length || 0);
+                            let lastH0 = ''; 
+                            for (let c = 0; c < numCols; c++) {
+                                let h0 = rows[0] && rows[0][c] ? rows[0][c].trim() : '';
+                                let h1 = rows[1] && rows[1][c] ? rows[1][c].trim() : '';
+                                let h2 = rows[2] && rows[2][c] ? rows[2][c].trim() : '';
+                                
+                                if (h0 !== '') lastH0 = h0; else h0 = lastH0;
+                                let parts = [h0, h1, h2].filter(Boolean);
+                                let uniqueParts = [...new Set(parts)];
+                                compositeHeaders.push(uniqueParts.length > 0 ? uniqueParts.join(' - ') : `Cột ${c + 1}`);
+                            }
                         }
 
-                        // Tìm vị trí cột Biệt Danh và Email thông minh
+                        // Tìm cột Biệt danh và Email
                         const idxNickname = compositeHeaders.findIndex(h => h.toLowerCase().includes('biệt danh'));
                         const idxEmail = compositeHeaders.findIndex(h => h.toLowerCase().includes('email'));
 
                         if (idxNickname === -1 || idxEmail === -1) {
-                            alert('Lỗi cấu hình: Google Sheet bắt buộc phải có từ khóa "Biệt danh" và "Email" ở các dòng tiêu đề.');
+                            alert('Lỗi cấu hình: Dữ liệu Sheet bắt buộc phải có từ khóa "Biệt danh" và "Email".');
                             return;
                         }
 
                         let foundUserRow = null;
-                        // NGƯỜI CHƠI BẮT ĐẦU TỪ DÒNG 4 (tương ứng với index i = 3 trong Array)
-                        for (let i = 3; i < rows.length; i++) {
+                        // Bắt đầu duyệt từ dòng cấu hình (Group=1, Knockout=3)
+                        for (let i = config.startRow; i < rows.length; i++) {
                             const currentRow = rows[i];
-                            // Bỏ qua các dòng trống
                             if (!currentRow || currentRow.length === 0) continue; 
                             
                             if (
@@ -167,24 +221,32 @@
                         }
 
                         let tableContentHtml = '';
-                        // Quét TOÀN BỘ số cột có trên Sheet (Không giới hạn ở số 79 như trước)
-                        const maxColumns = compositeHeaders.length;
+                        
+                        // Nếu là Vòng Loại: Cắt ở cột 79 theo format cũ. Nếu Knockout: Quét toàn bộ.
+                        const maxColumns = currentMode === 'group' 
+                                            ? Math.min(79, compositeHeaders.length) 
+                                            : compositeHeaders.length;
 
                         for (let colIdx = 0; colIdx < maxColumns; colIdx++) {
                             const columnName = compositeHeaders[colIdx];
                             const userValue = foundUserRow[colIdx]?.trim() || '---';
                             
-                            // Bỏ qua nếu cả Tên cột và Giá trị đều trống/không có ý nghĩa
-                            if (columnName.startsWith('Cột') && userValue === '---') {
+                            // Bỏ qua cột rỗng ở Knockout
+                            if (currentMode === 'knockout' && columnName.startsWith('Cột') && userValue === '---') {
                                 continue;
                             }
 
                             const rowBg = colIdx % 2 === 0 ? 'bg-slate-900/40' : 'bg-slate-800/30';
-
-                            // Đánh dấu nổi bật các dòng liên quan tới Điểm (Đúng/Sai +1, Sao...)
                             let valueColor = 'text-yellow-400';
-                            if (userValue === '+1' || userValue > 0) valueColor = 'text-green-400';
-                            if (userValue === '0' || userValue.startsWith('-')) valueColor = 'text-red-400';
+
+                            // Áp dụng format màu sắc Điểm Cộng / Điểm Trừ cho Vòng Knockout
+                            if (currentMode === 'knockout') {
+                                if (userValue === '+1' || (!isNaN(userValue) && Number(userValue) > 0)) {
+                                    valueColor = 'text-green-400';
+                                } else if (userValue === '0' || userValue.startsWith('-')) {
+                                    valueColor = 'text-red-400';
+                                }
+                            }
 
                             tableContentHtml += `
                                 <tr class="${rowBg} hover:bg-slate-800/80 transition-colors">
@@ -194,6 +256,7 @@
                             `;
                         }
 
+                        resultTitle.innerHTML = config.title;
                         userBadge.innerText = `🎮 ${foundUserRow[idxNickname]}`;
                         resultTableBody.innerHTML = tableContentHtml;
                         resultContainer.classList.remove('hidden');
@@ -201,13 +264,13 @@
                         resultContainer.scrollIntoView({ behavior: 'smooth' });
                     },
                     error: function(err) {
-                        alert('Lỗi phân tách dữ liệu Excel. Vui lòng liên hệ Admin.');
+                        alert('Lỗi phân tách dữ liệu. Vui lòng liên hệ Admin.');
                         console.error(err);
                     }
                 });
 
             } catch (error) {
-                alert('Không thể kết nối đến Google Sheet. Hãy kiểm tra lại link CSV hoặc quyền truy cập.');
+                alert('Không thể kết nối đến Google Sheet. Hãy kiểm tra lại link CSV hoặc mạng internet.');
                 console.error(error);
             }
         }
