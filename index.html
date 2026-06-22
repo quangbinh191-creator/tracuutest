@@ -2,94 +2,87 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>TRA CỨU DỰ ĐOÁN WORLD CUP 2026</title>
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <title>TRA CỨU DỰ ĐOÁN WORLD CUP 2026 🏆</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&display=swap');
-        body { font-family: 'Montserrat', sans-serif; background: #0f172a; }
+        body { background: linear-gradient(135deg, rgba(6, 78, 59, 0.8) 0%, rgba(15, 23, 42, 0.85) 100%); font-family: 'Montserrat', sans-serif; }
     </style>
 </head>
-<body class="min-h-screen text-slate-100 p-4">
+<body class="min-h-screen text-slate-100 flex flex-col items-center p-4">
 
-    <!-- FORM ĐĂNG NHẬP -->
-    <main id="loginSection" class="max-w-md mx-auto mt-20 bg-slate-900 border border-slate-700 p-8 rounded-2xl">
-        <h1 class="text-2xl font-black text-center mb-6 uppercase text-green-400">Đăng Nhập Tra Cứu</h1>
-        <form onsubmit="handleSearch(event)" class="space-y-4">
-            <input type="text" id="nickname" placeholder="Nickname" required class="w-full bg-slate-800 p-3 rounded-lg border border-slate-600">
-            <input type="email" id="email" placeholder="Email" required class="w-full bg-slate-800 p-3 rounded-lg border border-slate-600">
-            <button type="submit" class="w-full bg-green-600 hover:bg-green-500 py-3 rounded-lg font-bold uppercase">Tra Cứu</button>
+    <header class="text-center my-8">
+        <h1 class="text-3xl sm:text-5xl font-black text-white uppercase tracking-tight">TRA CỨU DỰ ĐOÁN</h1>
+    </header>
+
+    <main class="w-full max-w-md bg-slate-900/80 p-6 rounded-2xl shadow-2xl" id="loginArea">
+        <form id="searchForm" onsubmit="handleLogin(event)" class="space-y-4">
+            <input type="text" id="nickname" required placeholder="Nickname" class="w-full bg-slate-800 p-3 rounded-xl border border-slate-600">
+            <input type="email" id="email" required placeholder="Email" class="w-full bg-slate-800 p-3 rounded-xl border border-slate-600">
+            <button type="submit" class="w-full bg-green-600 hover:bg-green-500 py-3 rounded-xl font-bold uppercase">⚽ Bắt Đầu Tra Cứu</button>
         </form>
     </main>
 
-    <!-- KẾT QUẢ HIỂN THỊ -->
-    <section id="resultSection" class="hidden max-w-4xl mx-auto mt-10 bg-slate-900 border border-slate-700 rounded-2xl overflow-hidden p-6">
-        <!-- HEADER KẾT QUẢ -->
-        <div class="flex justify-between items-center mb-6">
-            <h2 class="text-xl font-black uppercase text-white">📋 KẾT QUẢ DỰ ĐOÁN & ĐIỂM SỐ</h2>
-            <div class="flex gap-2">
-                <span id="totalPoints" class="bg-amber-500 text-black px-4 py-1 rounded-full font-bold">Tổng điểm: 0đ</span>
-                <span id="userBadge" class="bg-indigo-600 px-4 py-1 rounded-full font-bold">---</span>
-            </div>
+    <section id="resultContainer" class="hidden w-full max-w-3xl mt-10">
+        <div class="flex gap-2 mb-4">
+            <button onclick="switchTab('vongLoai')" id="tabBtn1" class="px-6 py-2 bg-green-600 rounded-t-lg font-bold">Vòng Loại</button>
+            <button onclick="switchTab('knockOut')" id="tabBtn2" class="px-6 py-2 bg-slate-800 rounded-t-lg font-bold">Vòng Knock-out</button>
         </div>
-
-        <!-- 2 TAB CHUYỂN ĐỔI -->
-        <div class="flex gap-2 mb-6">
-            <button onclick="switchMode('group')" class="px-6 py-2 bg-slate-800 hover:bg-green-600 rounded-lg font-bold uppercase text-xs">Vòng Loại</button>
-            <button onclick="switchMode('knockout')" class="px-6 py-2 bg-slate-800 hover:bg-green-600 rounded-lg font-bold uppercase text-xs">Knockout</button>
+        
+        <div class="bg-slate-900/95 border-2 border-yellow-500/30 p-6 rounded-b-2xl rounded-tr-2xl shadow-2xl">
+            <div id="tableContent" class="overflow-x-auto"></div>
         </div>
-
-        <!-- BẢNG MẪU NHƯ "image_587cdf.jpg" -->
-        <table class="w-full text-left border-collapse">
-            <thead>
-                <tr class="text-slate-400 uppercase text-xs border-b border-slate-700">
-                    <th class="p-4">Hạng mục dự đoán</th>
-                    <th class="p-4">Lựa chọn của bạn</th>
-                    <th class="p-4">Kết quả chung cuộc</th>
-                    <th class="p-4">Điểm số</th>
-                </tr>
-            </thead>
-            <tbody id="resultTableBody" class="text-sm"></tbody>
-        </table>
     </section>
 
     <script>
-        const CONFIG = {
-            group: { url: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQOu74BZum8hv_WCNc2lCqbSmV-YXWkwWTrQZ4LmAZgY8Tjj6d9DEA1h6P9E8_4qXWisZy9-atqMeUP/pub?gid=267813523&single=true&output=csv', startRow: 1 },
-            knockout: { url: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQOu74BZum8hv_WCNc2lCqbSmV-YXWkwWTrQZ4LmAZgY8Tjj6d9DEA1h6P9E8_4qXWisZy9-atqMeUP/pub?gid=1421278402&single=true&output=csv', startRow: 3 }
+        let userData = { nickname: '', email: '' };
+        let activeTab = 'vongLoai';
+
+        const CSV_URLS = {
+            vongLoai: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQOu74BZum8hv_WCNc2lCqbSmV-YXWkwWTrQZ4LmAZgY8Tjj6d9DEA1h6P9E8_4qXWisZy9-atqMeUP/pub?gid=267813523&single=true&output=csv',
+            knockOut: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQOu74BZum8hv_WCNc2lCqbSmV-YXWkwWTrQZ4LmAZgY8Tjj6d9DEA1h6P9E8_4qXWisZy9-atqMeUP/pub?gid=1421278402&single=true&output=csv'
         };
 
-        let currentMode = 'group';
-        let currentUserData = null;
-
-        function switchMode(mode) {
-            currentMode = mode;
-            renderTable(currentUserData);
-        }
-
-        async function handleSearch(e) {
+        function handleLogin(e) {
             e.preventDefault();
-            const nickname = document.getElementById('nickname').value.trim();
-            const email = document.getElementById('email').value.trim();
-            
-            // Logic lấy dữ liệu (đơn giản hóa)
-            const response = await fetch(CONFIG[currentMode].url);
-            const data = Papa.parse(await response.text()).data;
-            
-            currentUserData = data.find(row => row[0]?.toLowerCase() === nickname.toLowerCase()); // Điều chỉnh index theo sheet
-            if(currentUserData) {
-                document.getElementById('loginSection').classList.add('hidden');
-                document.getElementById('resultSection').classList.remove('hidden');
-                renderTable(currentUserData);
-            }
+            userData.nickname = document.getElementById('nickname').value.trim();
+            userData.email = document.getElementById('email').value.trim();
+            document.getElementById('loginArea').classList.add('hidden');
+            document.getElementById('resultContainer').classList.remove('hidden');
+            fetchData();
         }
 
-        function renderTable(row) {
-            const tbody = document.getElementById('resultTableBody');
-            tbody.innerHTML = '';
-            // Render logic dựa trên 4 cột như trong "image_587cdf.jpg"
-            // Mỗi hàng sẽ có 4 <td> tương ứng: Hạng mục, Lựa chọn, Kết quả, Điểm
-            // Thêm class cho điểm số (xanh nếu +1, đỏ nếu 0)
+        function switchTab(tab) {
+            activeTab = tab;
+            document.getElementById('tabBtn1').className = tab === 'vongLoai' ? 'px-6 py-2 bg-green-600 rounded-t-lg font-bold' : 'px-6 py-2 bg-slate-800 rounded-t-lg font-bold';
+            document.getElementById('tabBtn2').className = tab === 'knockOut' ? 'px-6 py-2 bg-green-600 rounded-t-lg font-bold' : 'px-6 py-2 bg-slate-800 rounded-t-lg font-bold';
+            fetchData();
+        }
+
+        async function fetchData() {
+            const response = await fetch(CSV_URLS[activeTab]);
+            const csvText = await response.text();
+            Papa.parse(csvText, {
+                header: false,
+                complete: function(results) {
+                    const rows = results.data;
+                    // Logic lọc dữ liệu dựa trên nickname và email (giả định cột nickname/email ở index 0,1)
+                    const found = rows.find(r => r[0]?.trim().toLowerCase() === userData.nickname.toLowerCase() && r[1]?.trim().toLowerCase() === userData.email.toLowerCase());
+                    
+                    if(!found) { alert('Không tìm thấy dữ liệu!'); return; }
+                    renderTable(rows[0], found);
+                }
+            });
+        }
+
+        function renderTable(headers, values) {
+            let html = '<table class="w-full text-left text-sm"><tbody class="divide-y divide-slate-800">';
+            headers.forEach((h, i) => {
+                html += `<tr><td class="p-3 text-green-400 font-bold">${h}</td><td class="p-3 text-yellow-400">${values[i] || '---'}</td></tr>`;
+            });
+            html += '</tbody></table>';
+            document.getElementById('tableContent').innerHTML = html;
         }
     </script>
 </body>
