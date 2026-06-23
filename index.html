@@ -29,7 +29,7 @@
             FIFA World Cup 2026 🇺🇸 🇨🇦 🇲🇽
         </div>
         <h1 class="text-3xl sm:text-5xl font-black tracking-tight text-white uppercase text-neon">
-            TRA CỨU22 <span class="text-green-400">DỰ ĐOÁN</span>
+            TRA CỨU <span class="text-green-400">DỰ ĐOÁN</span>
         </h1>
         <p class="text-slate-400 mt-2 text-sm sm:text-base">Nhập thông tin cá nhân để xem lại hành trình tiên tri của bạn!</p>
     </header>
@@ -61,8 +61,10 @@
         </form>
     </main>
 
+    <!-- CONTAINER KẾT QUẢ -->
     <section id="resultContainer" class="hidden w-full max-w-5xl mt-10 bg-slate-900/95 border-2 border-yellow-500/30 rounded-2xl p-6 shadow-2xl backdrop-blur-md">
         
+        <!-- HEADER KẾT QUẢ -->
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-slate-700 pb-4 mb-4 gap-2">
             <div>
                 <h2 class="text-xl font-bold text-yellow-400 flex items-center gap-2">
@@ -75,6 +77,7 @@
             </span>
         </div>
 
+        <!-- HỆ THỐNG TAB NÚT -->
         <div class="flex border-b border-slate-700 mb-4 gap-2">
             <button onclick="switchTab('group')" id="tabGroupBtn" class="px-4 py-2 font-bold text-sm rounded-t-lg transition-all border-b-2 border-green-500 text-green-400 bg-slate-800/50">
                 ⚽ VÒNG BẢNG
@@ -84,6 +87,7 @@
             </button>
         </div>
 
+        <!-- BẢNG KẾT QUẢ VÒNG BẢNG -->
         <div id="groupTableWrapper" class="overflow-x-auto rounded-xl border border-slate-800">
             <div class="bg-slate-800/80 p-3 px-4 text-sm font-bold text-yellow-400 flex justify-between items-center border-b border-slate-700">
                 <span>Tổng điểm Vòng Bảng tạm tính:</span>
@@ -104,6 +108,7 @@
             </table>
         </div>
 
+        <!-- BẢNG KẾT QUẢ VÒNG KNOCKOUT -->
         <div id="knockoutTableWrapper" class="hidden overflow-x-auto rounded-xl border border-slate-800">
             <div class="bg-slate-800/80 p-3 px-4 text-sm font-bold text-yellow-400 flex justify-between items-center border-b border-slate-700">
                 <span>Tổng điểm Vòng Knockout tạm tính:</span>
@@ -258,24 +263,45 @@
                 }
 
                 // ==========================================
-                // II. XỬ LÝ TAB VÒNG KNOCKOUT (ĐÃ SỬA QUÉT TOÀN BỘ DÒNG)
+                // II. XỬ LÝ TAB VÒNG KNOCKOUT (ĐÃ SỬA TỰ ĐỘNG DÒ DÒNG TIÊU ĐỀ)
                 // ==========================================
                 let isKnockoutFound = false;
                 let knockoutRows = Papa.parse(resKnockout, { header: false }).data;
 
                 if (knockoutRows.length >= 2) {
-                    const rowMatches = knockoutRows[0];
-                    // Tìm hàng chứa đáp án BTC (Thường cố định là dòng 3 trong file của bạn, index = 2)
+                    // 1. Tự động tìm xem hàng nào trong 5 hàng đầu tiên chứa cột 'biệt danh' và 'email'
+                    let headerRowIdx = 0;
+                    let idxNickname = -1;
+                    let idxEmail = -1;
+
+                    for (let r = 0; r < Math.min(5, knockoutRows.length); r++) {
+                        let row = knockoutRows[r];
+                        let nIdx = row.findIndex(h => h && h.toLowerCase().includes('biệt danh'));
+                        let eIdx = row.findIndex(h => h && h.toLowerCase().includes('email'));
+                        if (nIdx !== -1 && eIdx !== -1) {
+                            headerRowIdx = r;
+                            idxNickname = nIdx;
+                            idxEmail = eIdx;
+                            break;
+                        }
+                    }
+
+                    // Nếu không tìm thấy bằng từ khóa, ép về dòng mặc định đầu tiên
+                    if (idxNickname === -1 || idxEmail === -1) {
+                        idxNickname = knockoutRows[0].findIndex(h => h && h.toLowerCase().includes('biệt danh'));
+                        idxEmail = knockoutRows[0].findIndex(h => h && h.toLowerCase().includes('email'));
+                        headerRowIdx = 0;
+                    }
+
+                    const rowMatches = knockoutRows[headerRowIdx];
+                    // Đáp án BTC thường nằm ở dòng index 2 (Hàng 3 trong sheet)
                     const rowBTC = knockoutRows[2] || []; 
-                    
-                    const idxNickname = rowMatches.findIndex(h => h && h.toLowerCase().includes('biệt danh'));
-                    const idxEmail = rowMatches.findIndex(h => h && h.toLowerCase().includes('email'));
 
                     if (idxNickname !== -1 && idxEmail !== -1) {
                         let foundUserRow = null;
                         
-                        // QUÉT TOÀN BỘ CÁC DÒNG TỪ INDEX 3 ĐẾN HẾT FILE (DÒNG 4 ĐẾN 47+)
-                        for (let i = 3; i < knockoutRows.length; i++) {
+                        // QUÉT TOÀN BỘ CÁC HÀNG BÊN DƯỚI DÒNG TIÊU ĐỀ ĐẾN HẾT FILE (ĐỦ HÀNG TỪ 4 ĐẾN 47+)
+                        for (let i = headerRowIdx + 1; i < knockoutRows.length; i++) {
                             const currentRow = knockoutRows[i];
                             if (!currentRow || currentRow.length <= Math.max(idxNickname, idxEmail)) continue;
 
