@@ -159,8 +159,8 @@
         async function handleSearch(event) {
             event.preventDefault();
             
-            const nicknameInput = document.getElementById('nickname').value.trim();
-            const emailInput = document.getElementById('email').value.trim();
+            const nicknameInput = cleanStr(document.getElementById('nickname').value);
+            const emailInput = cleanStr(document.getElementById('email').value);
             const resultContainer = document.getElementById('resultContainer');
             
             resultContainer.classList.add('hidden');
@@ -192,7 +192,7 @@
                     const idxEmailG = headersPred.findIndex(h => h && h.toLowerCase().includes('email'));
 
                     if (idxNickG !== -1 && idxEmailG !== -1) {
-                        let foundRowG = groupPredRows.find((r, idx) => idx > 0 && r[idxNickG]?.trim().toLowerCase() === nicknameInput.toLowerCase() && r[idxEmailG]?.trim().toLowerCase() === emailInput.toLowerCase());
+                        let foundRowG = groupPredRows.find((r, idx) => idx > 0 && cleanStr(r[idxNickG]) === nicknameInput && cleanStr(r[idxEmailG]) === emailInput);
                         
                         if (foundRowG) {
                             isGroupFound = true;
@@ -230,12 +230,10 @@
                                     const isCorrect = cleanStr(userPredict) === cleanStr(btcResult);
                                     if (isCorrect) {
                                         points = isStar ? 2 : (matchName.toLowerCase().includes('[trận x2 điểm]') ? 2 : 1);
-                                        // +2 điểm màu vàng, +1 điểm màu xanh lá quen thuộc
                                         pointsClass = points === 2 ? "text-yellow-400 font-black" : "text-green-400 font-black";
                                         pointsStr = `+${points}`;
                                     } else {
                                         points = isStar ? -1 : 0;
-                                        // -1 điểm màu đỏ nhạt/đỏ đậm, 0 điểm màu xám
                                         pointsClass = isStar ? "text-red-500 font-black" : "text-slate-400";
                                         pointsStr = points.toString();
                                     }
@@ -260,24 +258,30 @@
                 }
 
                 // ==========================================
-                // II. XỬ LÝ TAB VÒNG KNOCKOUT
+                // II. XỬ LÝ TAB VÒNG KNOCKOUT (ĐÃ SỬA QUÉT TOÀN BỘ DÒNG)
                 // ==========================================
                 let isKnockoutFound = false;
                 let knockoutRows = Papa.parse(resKnockout, { header: false }).data;
 
-                if (knockoutRows.length >= 4) {
+                if (knockoutRows.length >= 2) {
                     const rowMatches = knockoutRows[0];
-                    const rowBTC = knockoutRows[2]; 
+                    // Tìm hàng chứa đáp án BTC (Thường cố định là dòng 3 trong file của bạn, index = 2)
+                    const rowBTC = knockoutRows[2] || []; 
                     
                     const idxNickname = rowMatches.findIndex(h => h && h.toLowerCase().includes('biệt danh'));
                     const idxEmail = rowMatches.findIndex(h => h && h.toLowerCase().includes('email'));
 
                     if (idxNickname !== -1 && idxEmail !== -1) {
                         let foundUserRow = null;
+                        
+                        // QUÉT TOÀN BỘ CÁC DÒNG TỪ INDEX 3 ĐẾN HẾT FILE (DÒNG 4 ĐẾN 47+)
                         for (let i = 3; i < knockoutRows.length; i++) {
-                            if (knockoutRows[i][idxNickname]?.trim().toLowerCase() === nicknameInput.toLowerCase() &&
-                                knockoutRows[i][idxEmail]?.trim().toLowerCase() === emailInput.toLowerCase()) {
-                                foundUserRow = knockoutRows[i];
+                            const currentRow = knockoutRows[i];
+                            if (!currentRow || currentRow.length <= Math.max(idxNickname, idxEmail)) continue;
+
+                            if (cleanStr(currentRow[idxNickname]) === nicknameInput && 
+                                cleanStr(currentRow[idxEmail]) === emailInput) {
+                                foundUserRow = currentRow;
                                 break;
                             }
                         }
@@ -349,7 +353,7 @@
                     return;
                 }
 
-                document.getElementById('userBadge').innerText = `🎮 ${globalNickname || nicknameInput}`;
+                document.getElementById('userBadge').innerText = `🎮 ${globalNickname || document.getElementById('nickname').value.trim()}`;
                 document.getElementById('resultTableBody').innerHTML = currentGroupHtml || `<tr><td colspan="5" class="p-4 text-center text-slate-500">Không tìm thấy dữ liệu vòng bảng</td></tr>`;
                 document.getElementById('knockoutTableBody').innerHTML = currentKnockoutHtml || `<tr><td colspan="5" class="p-4 text-center text-slate-500">Không tìm thấy dữ liệu vòng knockout</td></tr>`;
                 document.getElementById('totalGroupPoints').innerText = `${totalGroupPoints}đ`;
