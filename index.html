@@ -50,7 +50,7 @@
                     Password (Email đăng ký)
                 </label>
                 <input type="email" id="email" required autocomplete="on"
-                    placeholder="123@gmail.com" 
+                    placeholder="name@example.com" 
                     class="w-full bg-slate-800/85 border border-slate-600 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-green-400 focus:ring-2 focus:ring-green-400/20 transition-all font-medium">
             </div>
 
@@ -61,10 +61,8 @@
         </form>
     </main>
 
-    <!-- CONTAINER KẾT QUẢ -->
     <section id="resultContainer" class="hidden w-full max-w-5xl mt-10 bg-slate-900/95 border-2 border-yellow-500/30 rounded-2xl p-6 shadow-2xl backdrop-blur-md">
         
-        <!-- HEADER KẾT QUẢ -->
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-slate-700 pb-4 mb-4 gap-2">
             <div>
                 <h2 class="text-xl font-bold text-yellow-400 flex items-center gap-2">
@@ -77,26 +75,24 @@
             </span>
         </div>
 
-        <!-- HỆ THỐNG TAB NÚT -->
         <div class="flex border-b border-slate-700 mb-4 gap-2">
-            <button onclick="switchTab('group')" id="tabGroupBtn" class="px-4 py-2 font-bold text-sm rounded-t-lg transition-all border-b-2 border-green-500 text-green-400 bg-slate-800/50">
+            <button onclick="switchTab('group')" id="tabGroupBtn" class="px-4 py-2 font-bold text-sm rounded-t-lg transition-all border-b-2 border-transparent text-slate-400 hover:text-white">
                 ⚽ VÒNG BẢNG
             </button>
-            <button onclick="switchTab('knockout')" id="tabKnockoutBtn" class="px-4 py-2 font-bold text-sm rounded-t-lg transition-all border-b-2 border-transparent text-slate-400 hover:text-white">
+            <button onclick="switchTab('knockout')" id="tabKnockoutBtn" class="px-4 py-2 font-bold text-sm rounded-t-lg transition-all border-b-2 border-green-500 text-green-400 bg-slate-800/50">
                 🏆 VÒNG KNOCKOUT
             </button>
         </div>
 
-        <!-- BẢNG KẾT QUẢ VÒNG BẢNG -->
-        <div id="groupTableWrapper" class="overflow-x-auto rounded-xl border border-slate-800">
+        <div id="groupTableWrapper" class="hidden overflow-x-auto rounded-xl border border-slate-800">
             <div class="bg-slate-800/80 p-3 px-4 text-sm font-bold text-yellow-400 flex justify-between items-center border-b border-slate-700">
-                <span>Tổng điểm Vòng Bảng tạm tính:</span>
+                <span>Tổng điểm Vòng Bảng:</span>
                 <span id="totalGroupPoints" class="text-xl text-green-400 bg-slate-900 px-3 py-1 rounded-lg border border-green-500/30">0đ</span>
             </div>
             <table class="w-full text-sm text-left">
                 <thead class="bg-slate-800 text-slate-300 uppercase text-xs tracking-wider">
                     <tr>
-                        <th class="px-4 py-3 font-bold text-green-400">Trận Đấu / Hạng Mục</th>
+                        <th class="px-4 py-3 font-bold text-green-400">Hạng Mục / Tiêu Chí</th>
                         <th class="px-4 py-3 font-bold text-yellow-400 text-center">Bạn Chọn</th>
                         <th class="px-4 py-3 font-bold text-blue-400 text-center">Chung Cuộc</th>
                         <th class="px-4 py-3 font-bold text-purple-400 text-center">NSHV</th>
@@ -108,7 +104,6 @@
             </table>
         </div>
 
-        <!-- BẢNG KẾT QUẢ VÒNG KNOCKOUT -->
         <div id="knockoutTableWrapper" class="hidden overflow-x-auto rounded-xl border border-slate-800">
             <div class="bg-slate-800/80 p-3 px-4 text-sm font-bold text-yellow-400 flex justify-between items-center border-b border-slate-700">
                 <span>Tổng điểm Vòng Knockout:</span>
@@ -117,7 +112,7 @@
             <table class="w-full text-sm text-left">
                 <thead class="bg-slate-800 text-slate-300 uppercase text-xs tracking-wider">
                     <tr>
-                        <th class="px-4 py-3 font-bold text-green-400">Trận Đấu</th>
+                        <th class="px-4 py-3 font-bold text-green-400">Hạng Mục / Trận Đấu</th>
                         <th class="px-4 py-3 font-bold text-yellow-400 text-center">Bạn Chọn</th>
                         <th class="px-4 py-3 font-bold text-blue-400 text-center">Chung Cuộc</th>
                         <th class="px-4 py-3 font-bold text-purple-400 text-center">NSHV</th>
@@ -145,22 +140,6 @@
             return (str || "").toString().trim().toLowerCase().replace(/\s+/g, '');
         }
 
-        const isTrashCol = h => {
-            if (!h) return true;
-            const low = h.toLowerCase();
-            return low.includes('thời gian') || 
-                   low.includes('mã số') || 
-                   low.includes('nhân viên') || 
-                   low.includes('tổng điểm') || 
-                   low.includes('ngôi sao') || 
-                   low.includes('hi vọng') || 
-                   low.includes('hy vọng') || 
-                   low === 'id' || 
-                   low === 'tên' ||
-                   low === 'email' ||
-                   low === 'biệt danh';
-        };
-
         async function handleSearch(event) {
             event.preventDefault();
             
@@ -182,7 +161,7 @@
                 ]);
 
                 // ==========================================
-                // I. XỬ LÝ TAB VÒNG BẢNG
+                // I. XỬ LÝ TAB VÒNG BẢNG (HIỂN THỊ TẤT CẢ CỘT)
                 // ==========================================
                 let isGroupFound = false;
                 let groupPredRows = Papa.parse(resGroupPred, { header: false }).data;
@@ -215,8 +194,7 @@
                             let matchCountG = 0;
                             for (let colIdx = 0; colIdx < headersPred.length; colIdx++) {
                                 const matchName = headersPred[colIdx]?.trim();
-                                
-                                if (isTrashCol(matchName)) continue;
+                                if (!matchName) continue; // Bỏ qua nếu cột hoàn toàn rỗng vô nghĩa
 
                                 matchCountG++;
                                 const userPredict = foundRowG[colIdx]?.trim() || '';
@@ -231,6 +209,7 @@
                                 let pointsClass = "text-slate-400";
                                 let pointsStr = "0";
 
+                                // Chỉ tính điểm nếu đây thực sự là cột có đáp án BTC và người chơi có chọn
                                 if (btcResult !== '' && btcResult.toLowerCase() !== 'chưa có' && btcResult !== '---' && userPredict !== '' && userPredict !== '---') {
                                     const isCorrect = cleanStr(userPredict) === cleanStr(btcResult);
                                     if (isCorrect) {
@@ -244,7 +223,7 @@
                                     }
                                     totalGroupPoints += points;
                                 } else {
-                                    pointsStr = "---";
+                                    pointsStr = btcResult.toLowerCase() === 'chưa có' || btcResult === '' ? "---" : "0";
                                 }
 
                                 const rowBg = matchCountG % 2 === 0 ? 'bg-slate-900/40' : 'bg-slate-800/30';
@@ -252,7 +231,7 @@
                                     <tr class="${rowBg} hover:bg-slate-800/80 transition-colors text-center">
                                         <td class="px-4 py-3.5 font-semibold text-slate-300 text-left border-r border-slate-800 w-1/3">${matchName}</td>
                                         <td class="px-4 py-3.5 text-yellow-400 font-bold">${userPredict || '---'}</td>
-                                        <td class="px-4 py-3.5 text-blue-300 font-medium">${btcResult || 'Chưa có'}</td>
+                                        <td class="px-4 py-3.5 text-blue-300 font-medium">${btcResult || '---'}</td>
                                         <td class="px-4 py-3.5">${isStar ? '⭐' : '—'}</td>
                                         <td class="px-4 py-3.5 ${pointsClass}">${pointsStr}</td>
                                     </tr>
@@ -263,13 +242,12 @@
                 }
 
                 // ==========================================
-                // II. XỬ LÝ TAB VÒNG KNOCKOUT (ĐÃ SỬA TỰ ĐỘNG DÒ DÒNG TIÊU ĐỀ)
+                // II. XỬ LÝ TAB VÒNG KNOCKOUT (HIỂN THỊ TẤT CẢ CỘT)
                 // ==========================================
                 let isKnockoutFound = false;
                 let knockoutRows = Papa.parse(resKnockout, { header: false }).data;
 
                 if (knockoutRows.length >= 2) {
-                    // 1. Tự động tìm xem hàng nào trong 5 hàng đầu tiên chứa cột 'biệt danh' và 'email'
                     let headerRowIdx = 0;
                     let idxNickname = -1;
                     let idxEmail = -1;
@@ -286,7 +264,6 @@
                         }
                     }
 
-                    // Nếu không tìm thấy bằng từ khóa, ép về dòng mặc định đầu tiên
                     if (idxNickname === -1 || idxEmail === -1) {
                         idxNickname = knockoutRows[0].findIndex(h => h && h.toLowerCase().includes('biệt danh'));
                         idxEmail = knockoutRows[0].findIndex(h => h && h.toLowerCase().includes('email'));
@@ -294,13 +271,11 @@
                     }
 
                     const rowMatches = knockoutRows[headerRowIdx];
-                    // Đáp án BTC thường nằm ở dòng index 2 (Hàng 3 trong sheet)
                     const rowBTC = knockoutRows[2] || []; 
 
                     if (idxNickname !== -1 && idxEmail !== -1) {
                         let foundUserRow = null;
                         
-                        // QUÉT TOÀN BỘ CÁC HÀNG BÊN DƯỚI DÒNG TIÊU ĐỀ ĐẾN HẾT FILE (ĐỦ HÀNG TỪ 4 ĐẾN 47+)
                         for (let i = headerRowIdx + 1; i < knockoutRows.length; i++) {
                             const currentRow = knockoutRows[i];
                             if (!currentRow || currentRow.length <= Math.max(idxNickname, idxEmail)) continue;
@@ -328,8 +303,7 @@
                             let matchCount = 0;
                             for (let colIdx = 0; colIdx < rowMatches.length; colIdx++) {
                                 const matchName = rowMatches[colIdx]?.trim();
-                                
-                                if (isTrashCol(matchName)) continue;
+                                if (!matchName) continue;
 
                                 matchCount++;
                                 const btcResult = rowBTC[colIdx]?.trim() || '';
@@ -356,7 +330,7 @@
                                     }
                                     totalKnockoutPoints += points;
                                 } else {
-                                    pointsStr = "---";
+                                    pointsStr = btcResult.toLowerCase() === 'chưa có' || btcResult === '' ? "---" : "0";
                                 }
 
                                 const rowBg = matchCount % 2 === 0 ? 'bg-slate-900/40' : 'bg-slate-800/30';
@@ -364,7 +338,7 @@
                                     <tr class="${rowBg} hover:bg-slate-800/80 transition-colors text-center">
                                         <td class="px-4 py-3.5 font-semibold text-slate-300 text-left border-r border-slate-800 w-1/3">${matchName}</td>
                                         <td class="px-4 py-3.5 text-yellow-400 font-bold">${userPredict || '---'}</td>
-                                        <td class="px-4 py-3.5 text-blue-300 font-medium">${btcResult || 'Chưa có'}</td>
+                                        <td class="px-4 py-3.5 text-blue-300 font-medium">${btcResult || '---'}</td>
                                         <td class="px-4 py-3.5">${isStar ? '⭐' : '—'}</td>
                                         <td class="px-4 py-3.5 ${pointsClass}">${pointsStr}</td>
                                     </tr>
@@ -385,7 +359,8 @@
                 document.getElementById('totalGroupPoints').innerText = `${totalGroupPoints}đ`;
                 document.getElementById('totalKnockoutPoints').innerText = `${totalKnockoutPoints}đ`;
 
-                switchTab('group');
+                // MẶC ĐỊNH HIỂN THỊ VÒNG KNOCKOUT KHI ĐĂNG NHẬP THÀNH CÔNG
+                switchTab('knockout');
                 resultContainer.classList.remove('hidden');
                 resultContainer.scrollIntoView({ behavior: 'smooth' });
 
