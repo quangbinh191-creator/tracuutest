@@ -61,10 +61,8 @@
         </form>
     </main>
 
-    <!-- CONTAINER KẾT QUẢ -->
     <section id="resultContainer" class="hidden w-full max-w-5xl mt-10 bg-slate-900/95 border-2 border-yellow-500/30 rounded-2xl p-6 shadow-2xl backdrop-blur-md">
         
-        <!-- HEADER KẾT QUẢ -->
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-slate-700 pb-4 mb-4 gap-2">
             <div>
                 <h2 class="text-xl font-bold text-yellow-400 flex items-center gap-2">
@@ -77,7 +75,6 @@
             </span>
         </div>
 
-        <!-- HỆ THỐNG TAB NÚT -->
         <div class="flex border-b border-slate-700 mb-4 gap-2">
             <button onclick="switchTab('group')" id="tabGroupBtn" class="px-4 py-2 font-bold text-sm rounded-t-lg transition-all border-b-2 border-green-500 text-green-400 bg-slate-800/50">
                 ⚽ VÒNG BẢNG
@@ -87,7 +84,6 @@
             </button>
         </div>
 
-        <!-- BẢNG KẾT QUẢ VÒNG BẢNG -->
         <div id="groupTableWrapper" class="overflow-x-auto rounded-xl border border-slate-800">
             <div class="bg-slate-800/80 p-3 px-4 text-sm font-bold text-yellow-400 flex justify-between items-center border-b border-slate-700">
                 <span>Tổng điểm Vòng Bảng tạm tính:</span>
@@ -97,8 +93,8 @@
                 <thead class="bg-slate-800 text-slate-300 uppercase text-xs tracking-wider">
                     <tr>
                         <th class="px-4 py-3 font-bold text-green-400">Trận Đấu / Hạng Mục</th>
-                        <th class="px-4 py-3 font-bold text-blue-400 text-center">Đáp Án BTC</th>
                         <th class="px-4 py-3 font-bold text-yellow-400 text-center">Bạn Chọn</th>
+                        <th class="px-4 py-3 font-bold text-blue-400 text-center">Đáp Án BTC</th>
                         <th class="px-4 py-3 font-bold text-purple-400 text-center">NSHV</th>
                         <th class="px-4 py-3 font-bold text-emerald-400 text-center">Điểm số</th>
                     </tr>
@@ -108,7 +104,6 @@
             </table>
         </div>
 
-        <!-- BẢNG KẾT QUẢ VÒNG KNOCKOUT -->
         <div id="knockoutTableWrapper" class="hidden overflow-x-auto rounded-xl border border-slate-800">
             <div class="bg-slate-800/80 p-3 px-4 text-sm font-bold text-yellow-400 flex justify-between items-center border-b border-slate-700">
                 <span>Tổng điểm Vòng Knockout tạm tính:</span>
@@ -118,8 +113,8 @@
                 <thead class="bg-slate-800 text-slate-300 uppercase text-xs tracking-wider">
                     <tr>
                         <th class="px-4 py-3 font-bold text-green-400">Trận Đấu</th>
-                        <th class="px-4 py-3 font-bold text-blue-400 text-center">Đáp Án BTC</th>
                         <th class="px-4 py-3 font-bold text-yellow-400 text-center">Bạn Chọn</th>
+                        <th class="px-4 py-3 font-bold text-blue-400 text-center">Đáp Án BTC</th>
                         <th class="px-4 py-3 font-bold text-purple-400 text-center">NSHV</th>
                         <th class="px-4 py-3 font-bold text-emerald-400 text-center">Điểm số</th>
                     </tr>
@@ -141,12 +136,10 @@
         let totalGroupPoints = 0;
         let totalKnockoutPoints = 0;
 
-        // Hàm làm sạch chuỗi chuyên sâu để chống lệch dấu câu/khoảng trắng
         function cleanStr(str) {
             return (str || "").toString().trim().toLowerCase().replace(/\s+/g, '');
         }
 
-        // Cập nhật bộ lọc rác ẩn triệt để các cột chứa từ "hi vọng" hoặc "hy vọng"
         const isTrashCol = h => {
             if (!h) return true;
             const low = h.toLowerCase();
@@ -205,7 +198,6 @@
                             isGroupFound = true;
                             globalNickname = foundRowG[idxNickG]?.trim();
 
-                            // Tự động nhận diện Ngôi Sao Hy Vọng bằng cách quét xem có đáp án nào của User trùng 100% với tên trận đấu không
                             const validHeadersCleanG = headersPred.map(h => cleanStr(h));
                             let starChoicesCleanG = [];
                             for (let col = 0; col < foundRowG.length; col++) {
@@ -228,7 +220,6 @@
                                 const btcResult = resColIdx !== -1 ? rowBTCRes[resColIdx]?.trim() : '';
 
                                 const currentMatchClean = cleanStr(matchName);
-                                // Kiểm tra nếu tên cột trận đấu nằm trong mảng các trận được NSHV
                                 const isStar = starChoicesCleanG.includes(currentMatchClean) && userPredict !== '' && userPredict !== '---';
 
                                 let points = 0;
@@ -239,10 +230,12 @@
                                     const isCorrect = cleanStr(userPredict) === cleanStr(btcResult);
                                     if (isCorrect) {
                                         points = isStar ? 2 : (matchName.toLowerCase().includes('[trận x2 điểm]') ? 2 : 1);
-                                        pointsClass = "text-green-400 font-black";
+                                        // +2 điểm màu vàng, +1 điểm màu xanh lá quen thuộc
+                                        pointsClass = points === 2 ? "text-yellow-400 font-black" : "text-green-400 font-black";
                                         pointsStr = `+${points}`;
                                     } else {
                                         points = isStar ? -1 : 0;
+                                        // -1 điểm màu đỏ nhạt/đỏ đậm, 0 điểm màu xám
                                         pointsClass = isStar ? "text-red-500 font-black" : "text-slate-400";
                                         pointsStr = points.toString();
                                     }
@@ -255,8 +248,8 @@
                                 currentGroupHtml += `
                                     <tr class="${rowBg} hover:bg-slate-800/80 transition-colors text-center">
                                         <td class="px-4 py-3.5 font-semibold text-slate-300 text-left border-r border-slate-800 w-1/3">${matchName}</td>
-                                        <td class="px-4 py-3.5 text-blue-300 font-medium">${btcResult || 'Chưa có'}</td>
                                         <td class="px-4 py-3.5 text-yellow-400 font-bold">${userPredict || '---'}</td>
+                                        <td class="px-4 py-3.5 text-blue-300 font-medium">${btcResult || 'Chưa có'}</td>
                                         <td class="px-4 py-3.5">${isStar ? '⭐' : '—'}</td>
                                         <td class="px-4 py-3.5 ${pointsClass}">${pointsStr}</td>
                                     </tr>
@@ -293,12 +286,10 @@
                             isKnockoutFound = true;
                             if(!globalNickname) globalNickname = foundUserRow[idxNickname]?.trim();
 
-                            // Nhận diện chéo Ngôi sao hy vọng siêu chuẩn
                             const validHeadersCleanK = rowMatches.map(h => cleanStr(h));
                             let starChoicesCleanK = [];
                             for (let col = 0; col < foundUserRow.length; col++) {
                                 let valClean = cleanStr(foundUserRow[col]);
-                                // Nếu câu trả lời của user > 20 ký tự & trùng y xì đúc với tên 1 tiêu đề cột, chắc chắn là chọn NSHV
                                 if (valClean.length > 20 && validHeadersCleanK.includes(valClean)) {
                                     starChoicesCleanK.push(valClean);
                                 }
@@ -308,7 +299,7 @@
                             for (let colIdx = 0; colIdx < rowMatches.length; colIdx++) {
                                 const matchName = rowMatches[colIdx]?.trim();
                                 
-                                if (isTrashCol(matchName)) continue; // Bỏ qua tự động các cột không phải trận đấu
+                                if (isTrashCol(matchName)) continue;
 
                                 matchCount++;
                                 const btcResult = rowBTC[colIdx]?.trim() || '';
@@ -324,10 +315,9 @@
                                 if (btcResult !== '' && btcResult.toLowerCase() !== 'chưa có' && btcResult !== '---' && userPredict !== '' && userPredict !== '---') {
                                     const isCorrect = cleanStr(userPredict) === cleanStr(btcResult);
                                     
-                                    // LOGIC TÍNH ĐIỂM CHUẨN
                                     if (isCorrect) {
                                         points = isStar ? 2 : (matchName.toLowerCase().includes('[trận x2 điểm]') ? 2 : 1);
-                                        pointsClass = "text-green-400 font-black";
+                                        pointsClass = points === 2 ? "text-yellow-400 font-black" : "text-green-400 font-black";
                                         pointsStr = `+${points}`;
                                     } else {
                                         points = isStar ? -1 : 0;
@@ -343,8 +333,8 @@
                                 currentKnockoutHtml += `
                                     <tr class="${rowBg} hover:bg-slate-800/80 transition-colors text-center">
                                         <td class="px-4 py-3.5 font-semibold text-slate-300 text-left border-r border-slate-800 w-1/3">${matchName}</td>
-                                        <td class="px-4 py-3.5 text-blue-300 font-medium">${btcResult || 'Chưa có'}</td>
                                         <td class="px-4 py-3.5 text-yellow-400 font-bold">${userPredict || '---'}</td>
+                                        <td class="px-4 py-3.5 text-blue-300 font-medium">${btcResult || 'Chưa có'}</td>
                                         <td class="px-4 py-3.5">${isStar ? '⭐' : '—'}</td>
                                         <td class="px-4 py-3.5 ${pointsClass}">${pointsStr}</td>
                                     </tr>
